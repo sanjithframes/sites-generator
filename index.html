@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Generator v2</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f1117;color:#e2e8f0;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{background:#1a1d27;border-bottom:1px solid #2d3148;padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+header h1{font-size:15px;font-weight:700;color:#a78bfa}
+header small{font-size:11px;color:#475569;background:#1e2235;padding:2px 8px;border-radius:12px}
+main{display:flex;flex:1;overflow:hidden}
+#sidebar{width:390px;flex-shrink:0;background:#13151f;border-right:1px solid #1e2235;display:flex;flex-direction:column;overflow:hidden}
+#tpl-bar{padding:14px 14px 0;flex-shrink:0}
+#tpl-bar h2{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#475569;margin-bottom:8px}
+#tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tpl-card{background:#1a1d27;border:1.5px solid #2d3148;border-radius:8px;padding:9px 11px;cursor:pointer;transition:all .15s}
+.tpl-card:hover{border-color:#7c3aed}
+.tpl-card.active{border-color:#7c3aed;background:#1e1630}
+.tpl-name{font-size:12px;font-weight:600;color:#e2e8f0}
+.tpl-ind{font-size:10px;color:#475569;margin-top:1px}
+#form-area{flex:1;overflow-y:auto;padding:14px}
+#form-area::-webkit-scrollbar{width:3px}
+#form-area::-webkit-scrollbar-thumb{background:#2d3148;border-radius:2px}
+.fg{margin-bottom:18px}
+.fg h3{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#7c3aed;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #1e2235}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:11px;color:#94a3b8;margin-bottom:3px}
+.field input[type=text],.field input[type=email],.field input[type=url],.field textarea,.field select{width:100%;background:#1a1d27;border:1px solid #2d3148;border-radius:6px;color:#e2e8f0;font-size:12px;padding:7px 9px;outline:none;transition:border-color .15s;font-family:inherit}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:#7c3aed}
+.field textarea{resize:vertical;min-height:64px}
+.crow{display:flex;gap:6px;align-items:center}
+.crow input[type=color]{width:38px;height:34px;border:1px solid #2d3148;border-radius:6px;background:#1a1d27;cursor:pointer;padding:2px;flex-shrink:0}
+.crow input[type=text]{flex:1}
+.ip{display:flex;align-items:center;gap:7px}
+.ip-btn{flex-shrink:0;background:#1e2235;border:1px solid #2d3148;color:#94a3b8;font-size:11px;padding:6px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.ip-btn:hover{border-color:#7c3aed;color:#e2e8f0}
+.ip-thumb{width:32px;height:32px;object-fit:cover;border-radius:4px;display:none}
+.ip-name{font-size:10px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.di{background:#1a1d27;border:1px solid #2d3148;border-radius:6px;padding:9px;margin-bottom:7px;position:relative}
+.di input,.di textarea{background:#13151f}
+.di-rm{position:absolute;top:7px;right:7px;background:none;border:none;color:#475569;cursor:pointer;font-size:15px;line-height:1;padding:0 3px}
+.di-rm:hover{color:#ef4444}
+.add-btn{background:none;border:1px dashed #2d3148;color:#475569;font-size:11px;padding:7px;border-radius:6px;cursor:pointer;width:100%;margin-top:3px}
+.add-btn:hover{border-color:#7c3aed;color:#a78bfa}
+.gg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.gs{aspect-ratio:1;background:#1a1d27;border:1px dashed #2d3148;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative}
+.gs:hover{border-color:#7c3aed}
+.gs img{width:100%;height:100%;object-fit:cover;display:none;position:absolute;inset:0}
+.gs span{font-size:10px;color:#475569}
+#gen-bar{padding:14px;border-top:1px solid #1e2235;flex-shrink:0}
+#gen-btn{width:100%;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+#gen-btn:hover{opacity:.9}
+#preview-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#preview-bar{background:#13151f;border-bottom:1px solid #1e2235;padding:0 14px;height:38px;display:flex;align-items:center;flex-shrink:0}
+#preview-bar span{font-size:11px;color:#475569}
+#preview-iframe{flex:1;border:none;background:#fff}
+</style>
+</head>
+<body>
+<header>
+  <h1>Site Generator</h1>
+  <small>Modular v2 — Add templates by extending TEMPLATES</small>
+</header>
+<main>
+<div id="sidebar">
+  <div id="tpl-bar">
+    <h2>Template</h2>
+    <div id="tpl-grid"></div>
+  </div>
+  <div id="form-area">
+    <div class="fg" id="common-fields">
+      <h3>Business Info</h3>
+      <div class="field"><label>Business Name *</label><input type="text" id="f-name" placeholder="Sree Devi Cafe" oninput="livePreview()"></div>
+      <div class="field"><label>Tagline</label><input type="text" id="f-tagline" placeholder="Authentic Kerala flavours since 1990" oninput="livePreview()"></div>
+      <div class="field"><label>About</label><textarea id="f-about" rows="3" placeholder="Tell your story..." oninput="livePreview()"></textarea></div>
+      <div class="field"><label>Phone / WhatsApp</label><input type="text" id="f-phone" placeholder="+91 98765 43210" oninput="livePreview()"></div>
+      <div class="field"><label>Email</label><input type="email" id="f-email" placeholder="hello@yourbusiness.com" oninput="livePreview()"></div>
+      <div class="field"><label>Address</label><textarea id="f-address" rows="2" placeholder="Fort Kochi, Kerala" oninput="livePreview()"></textarea></div>
+    </div>
+    <div class="fg">
+      <h3>Brand Colors</h3>
+      <div class="field"><label>Primary</label><div class="crow"><input type="color" id="c-primary" value="#7c3aed" oninput="syncH('primary')"><input type="text" id="h-primary" value="#7c3aed" maxlength="7" oninput="syncC('primary')"></div></div>
+      <div class="field"><label>Accent</label><div class="crow"><input type="color" id="c-accent" value="#f59e0b" oninput="syncH('accent')"><input type="text" id="h-accent" value="#f59e0b" maxlength="7" oninput="syncC('accent')"></div></div>
+    </div>
+    <div class="fg">
+      <h3>Images</h3>
+      <div class="field"><label>Logo (optional)</label><div class="ip"><button class="ip-btn" onclick="pickImg('logo')">Choose</button><img class="ip-thumb" id="thumb-logo"><span class="ip-name" id="iname-logo">No file</span></div></div>
+      <div class="field"><label>Hero / Banner Image</label><div class="ip"><button class="ip-btn" onclick="pickImg('hero')">Choose</button><img class="ip-thumb" id="thumb-hero"><span class="ip-name" id="iname-hero">No file</span></div></div>
+    </div>
+    <div id="extra-fields"></div>
+  </div>
+  <div id="gen-bar">
+    <button id="gen-btn" onclick="generate()">Generate Website</button>
+  </div>
+</div>
+<div id="preview-panel">
+  <div id="preview-bar"><span>Live Preview</span></div>
+  <iframe id="preview-iframe" srcdoc="<p style='font:14px sans-serif;color:#999;padding:40px;text-align:center'>Select a template to begin</p>"></iframe>
+</div>
+</main>
+
+<script>
+// ─── Utilities ────────────────────────────────────────────────────────────────
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const v = id => (document.getElementById(id)||{}).value||'';
+const wa = phone => { const n=(phone||'').replace(/\D/g,''); return n?`https://wa.me/${n}`:''; };
+const safe = u => u&&!/^https?:\/\//i.test(u)?'https://'+u:u;
+
+// ─── Image store ──────────────────────────────────────────────────────────────
+const IMG = {};
+
+function pickImg(key) {
+  const inp = document.createElement('input');
+  inp.type='file'; inp.accept='image/*';
+  inp.onchange = e => {
+    const f = e.target.files[0]; if(!f) return;
+    if(IMG[key]?.url) URL.revokeObjectURL(IMG[key].url);
+    IMG[key] = {file:f, url:URL.createObjectURL(f), name:f.name};
+    const th=document.getElementById('thumb-'+key), nm=document.getElementById('iname-'+key);
+    if(th){th.src=IMG[key].url;th.style.display='block';}
+    if(nm) nm.textContent=f.name;
+    livePreview();
+  };
+  inp.click();
+}
+
+function initGal(id, keys) {
+  const c=document.getElementById(id); if(!c) return; c.innerHTML='';
+  keys.forEach(key=>{
+    const s=document.createElement('div'); s.className='gs'; s.dataset.key=key;
+    s.innerHTML=`<img id="thumb-${key}"><span>+</span>`;
+    s.onclick=()=>pickGal(key,s); c.appendChild(s);
+  });
+}
+
+function pickGal(key,slot) {
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+  inp.onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    if(IMG[key]?.url) URL.revokeObjectURL(IMG[key].url);
+    IMG[key]={file:f,url:URL.createObjectURL(f),name:f.name};
+    const img=slot.querySelector('img'); img.src=IMG[key].url; img.style.display='block';
+    slot.querySelector('span').style.display='none';
+    livePreview();
+  }; inp.click();
+}
+
+// ─── Colors ───────────────────────────────────────────────────────────────────
+function syncH(k){document.getElementById('h-'+k).value=document.getElementById('c-'+k).value;livePreview();}
+function syncC(k){const h=document.getElementById('h-'+k).value;if(/^#[0-9a-fA-F]{6}$/.test(h))document.getElementById('c-'+k).value=h;livePreview();}
+function setColors(p,a){
+  ['c-primary','h-primary'].forEach(id=>document.getElementById(id).value=p);
+  ['c-accent','h-accent'].forEach(id=>document.getElementById(id).value=a);
+}
+
+// ─── Dynamic lists ────────────────────────────────────────────────────────────
+function addItem(listId, innerHtml) {
+  const c=document.getElementById(listId);
+  const d=document.createElement('div'); d.className='di';
+  d.innerHTML=`<button class="di-rm" onclick="this.parentElement.remove();livePreview()" title="Remove">&times;</button>${innerHtml}`;
+  c.appendChild(d); livePreview();
+}
+
+function getItems(listId, fields) {
+  return [...document.querySelectorAll(`#${listId} .di`)].map(el=>{
+    const o={};
+    fields.forEach(f=>{const x=el.querySelector(`[data-f="${f}"]`);o[f]=x?x.value:'';});
+    return o;
+  });
+}
+
+// ─── Common data ──────────────────────────────────────────────────────────────
+function common() {
+  return {name:v('f-name'),tagline:v('f-tagline'),about:v('f-about'),
+    phone:v('f-phone'),email:v('f-email'),address:v('f-address'),
+    primary:v('h-primary')||'#7c3aed',accent:v('h-accent')||'#f59e0b'};
+}
+
+// ─── Shared generated-site CSS ────────────────────────────────────────────────
+function baseCSS(p,a,opts={}) {
+  const bg=opts.bg||'#fff', surf=opts.surf||'#f8f9fa', textCol=opts.text||'#1a1a2e';
+  return `*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--p:${p};--a:${a};--text:${textCol};--muted:#64748b;--bg:${bg};--surf:${surf}}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--text);background:var(--bg);line-height:1.65}
+img{max-width:100%;display:block}a{color:inherit;text-decoration:none}
+.wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+nav{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid rgba(0,0,0,.08);backdrop-filter:blur(8px)}
+.ni{display:flex;align-items:center;justify-content:space-between;height:62px}
+.nl{font-size:18px;font-weight:800;color:var(--p)}
+.nm{display:flex;gap:26px}
+.nm a{font-size:14px;color:var(--muted);font-weight:500;transition:color .2s}
+.nm a:hover{color:var(--p)}
+.burger{display:none;background:none;border:none;cursor:pointer;padding:4px}
+.burger span{display:block;width:22px;height:2px;background:var(--text);margin:5px 0;border-radius:2px}
+section{padding:76px 0}
+.alt{background:var(--surf)}
+.sl{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--a);font-weight:700;margin-bottom:10px}
+.st{font-size:clamp(1.6rem,3vw,2.4rem);font-weight:800;margin-bottom:14px}
+.ss{color:var(--muted);font-size:1rem;max-width:560px;margin-bottom:44px}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px}
+.card{background:var(--bg);border:1px solid rgba(0,0,0,.07);border-radius:12px;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.1)}
+.card img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.cb{padding:18px}
+.cb h3{font-size:16px;font-weight:700;margin-bottom:6px}
+.cb p{color:var(--muted);font-size:13px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:12px 26px;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;border:none;transition:transform .15s,opacity .15s}
+.btn:hover{transform:translateY(-1px);opacity:.92}
+.bp{background:var(--a);color:#fff}
+.bo{background:transparent;border:2px solid rgba(255,255,255,.6);color:#fff}
+.cg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:20px}
+.ci{display:flex;align-items:flex-start;gap:12px}
+.cion{width:42px;height:42px;border-radius:10px;background:rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ci h4{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px}
+.ci p{font-size:14px;font-weight:500}
+footer{background:var(--text);color:rgba(255,255,255,.55);text-align:center;padding:22px;font-size:12px}
+footer strong{color:rgba(255,255,255,.85)}
+.wafab{position:fixed;bottom:22px;right:22px;width:54px;height:54px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(37,211,102,.4);z-index:999;transition:transform .2s}
+.wafab:hover{transform:scale(1.1)}
+.wafab svg{width:26px;height:26px;fill:#fff}
+@media(max-width:640px){
+  .nm{display:none;flex-direction:column;position:absolute;top:62px;left:0;right:0;background:var(--bg);border-bottom:1px solid rgba(0,0,0,.08);padding:14px 24px;gap:14px}
+  .nm.open{display:flex}.burger{display:block}
+  section{padding:52px 0}
+}`;
+}
+
+function navJs(){return `document.querySelector('.burger').addEventListener('click',()=>document.getElementById('nm').classList.toggle('open'));`;}
+
+function wafab(phone){
+  const lnk=wa(phone); if(!lnk) return '';
+  return `<a class="wafab" href="${lnk}" target="_blank" rel="noopener" title="WhatsApp"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.555 4.122 1.527 5.856L.057 23.405a.75.75 0 0 0 .924.924l5.549-1.47A11.952 11.952 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.737 9.737 0 0 1-4.96-1.357l-.355-.21-3.685.976.976-3.685-.21-.355A9.737 9.737 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg></a>`;
+}
+
+function heroSection(d, heroSrc, cta1, cta2='') {
+  return `<section class="hero"><div class="wrap"><div class="hc">
+    <h1>${esc(d.name)}</h1>
+    ${d.tagline?`<p>${esc(d.tagline)}</p>`:''}
+    <div class="hbtns">${cta1}${cta2}</div>
+  </div></div>${heroSrc?`<img class="hbg" src="${heroSrc}" alt="">`:''}
+  </section>`;
+}
+
+function contactSection(d, extra='') {
+  return `<section id="contact" class="alt"><div class="wrap">
+    <div class="sl">Find Us</div><h2 class="st">Contact</h2>
+    <div class="cg">
+      ${d.address?`<div class="ci"><div class="cion">📍</div><div><h4>Address</h4><p>${esc(d.address)}</p></div></div>`:''}
+      ${d.phone?`<div class="ci"><div class="cion">📞</div><div><h4>Phone</h4><p>${esc(d.phone)}</p></div></div>`:''}
+      ${d.email?`<div class="ci"><div class="cion">✉️</div><div><h4>Email</h4><p>${esc(d.email)}</p></div></div>`:''}
+    </div>${extra}
+  </div></section>`;
+}
+
+function navHtml(logoSrc, name, links) {
+  const linkHtml = links.map(([href,label])=>`<a href="${href}">${label}</a>`).join('');
+  return `<nav><div class="wrap"><div class="ni">
+    <div class="nl">${logoSrc?`<img src="${logoSrc}" alt="logo" style="height:38px">`:`${esc(name)}`}</div>
+    <button class="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="nm" id="nm">${linkHtml}</div>
+  </div></div></nav>`;
+}
+
+function footerHtml(name) {
+  return `<footer><p>&copy; ${new Date().getFullYear()} <strong>${esc(name)}</strong>. All rights reserved.</p></footer>`;
+}
+
+function wrap(title, css, body, phone) {
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${css}</style></head><body>${body}${wafab(phone)}<script>${navJs()}<\/script></body></html>`;
+}
+
+// ─── TEMPLATES ────────────────────────────────────────────────────────────────
+// To add a new template: create TEMPLATES.yourId = { id, label, industry, defaultColors, onSelect(), build(d,fp) }
+// onSelect() injects HTML into #extra-fields and seeds default list items.
+// build(d, forPreview) returns { 'index.html': '...', 'style.css': '...' }
+
+const TEMPLATES = {};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// RESTAURANT & CAFE
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.restaurant = {
+  id:'restaurant', label:'Restaurant & Café', industry:'Food & Dining',
+  defaultColors:{primary:'#7b2d00',accent:'#c8860a'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Menu</h3><div id="menu-list"></div>
+  <button class="add-btn" onclick="addMenuItem()">+ Add Category</button></div>
+<div class="fg"><h3>Food Gallery</h3><div class="gg" id="gal-r"></div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Opening Hours</label><input type="text" id="f-hours" placeholder="Mon–Sun 11am–10pm" oninput="livePreview()"></div>
+  <div class="field"><label>Cuisine Type</label><input type="text" id="f-cuisine" placeholder="Kerala, North Indian" oninput="livePreview()"></div>
+  <div class="field"><label>Google Maps Embed URL</label><input type="url" id="f-maps" placeholder="https://maps.google.com/..." oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-r',['rg1','rg2','rg3','rg4','rg5','rg6']);
+    addMenuItem(); addMenuItem();
+  },
+  build(d,fp) {
+    const menu = getItems('menu-list',['cat','items']);
+    const gkeys = ['rg1','rg2','rg3','rg4','rg5','rg6'];
+    const hero = fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo = fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const hours=v('f-hours'), cuisine=v('f-cuisine'), maps=v('f-maps');
+    const galHtml = gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="food ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const menuHtml = menu.filter(m=>m.cat).map(m=>`
+      <div class="mcat"><h3 class="mcn">${esc(m.cat)}</h3>
+      <div class="mitems">${m.items.split(',').map(i=>{const[n,p]=i.trim().split('-').map(s=>s.trim());return n?`<div class="mi"><span>${esc(n)}</span>${p?`<span class="mp">${esc(p)}</span>`:''}</div>`:''}).join('')}</div>
+      </div>`).join('');
+    const css = baseCSS(d.primary,d.accent,{bg:'#fdfaf5',surf:'#f5ede0'}) + `
+.hero{min-height:88vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(135deg,${d.primary}dd,${d.accent}99)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.22}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;line-height:1.1;margin-bottom:14px}
+.hc p{font-size:clamp(1rem,2vw,1.2rem);opacity:.88;max-width:540px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.mcat{margin-bottom:36px}
+.mcn{font-size:1.2rem;font-weight:700;color:var(--p);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(0,0,0,.08)}
+.mitems{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.mi{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(0,0,0,.06);font-size:14px}
+.mp{font-weight:700;color:var(--p)}
+.fgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:11px}
+.fgal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}`;
+    const body = navHtml(logo,d.name,[['#about','About'],['#menu','Menu'],galHtml?['#gallery','Gallery']:null,['#contact','Contact']].filter(Boolean))
+      + heroSection(d,hero,
+          d.phone?`<a href="${wa(d.phone)}" class="btn bp" target="_blank">Order on WhatsApp</a>`:'',
+          `<a href="#menu" class="btn bo">View Menu</a>`)
+      + `<section id="about"><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">Our Story</div><h2 class="st">${esc(d.name)}</h2>
+          ${cuisine?`<p style="color:var(--a);font-weight:600;margin-bottom:10px">${esc(cuisine)}</p>`:''}
+          <p class="ss">${esc(d.about)}</p></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          ${d.phone?`<div class="card" style="padding:18px;text-align:center"><div style="font-size:1.4rem">📞</div><div style="font-size:11px;color:var(--muted);margin:4px 0">Call</div><div style="font-weight:600;font-size:13px">${esc(d.phone)}</div></div>`:''}
+          ${hours?`<div class="card" style="padding:18px;text-align:center"><div style="font-size:1.4rem">🕐</div><div style="font-size:11px;color:var(--muted);margin:4px 0">Hours</div><div style="font-weight:600;font-size:12px">${esc(hours)}</div></div>`:''}
+          </div></div></div></section>`
+      + (menuHtml?`<section id="menu" class="alt"><div class="wrap"><div class="sl">What We Serve</div><h2 class="st">Our Menu</h2>${menuHtml}</div></section>`:'')
+      + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Fresh &amp; Delicious</div><h2 class="st">Gallery</h2><div class="fgal">${galHtml}</div></div></section>`:'')
+      + contactSection(d, maps?`<div style="margin-top:32px;border-radius:12px;overflow:hidden;height:300px"><iframe src="${esc(maps)}" width="100%" height="300" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:'')
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// WELLNESS & SPA / AYURVEDA
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.wellness = {
+  id:'wellness', label:'Wellness & Spa', industry:'Health & Wellness',
+  defaultColors:{primary:'#2d6a4f',accent:'#b7791f'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Treatments</h3><div id="treat-list"></div>
+  <button class="add-btn" onclick="addTreat()">+ Add Treatment</button></div>
+<div class="fg"><h3>Gallery</h3><div class="gg" id="gal-w"></div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Speciality / USP</label><input type="text" id="f-usp" placeholder="Traditional Panchakarma, 20+ years" oninput="livePreview()"></div>
+  <div class="field"><label>Booking Link</label><input type="url" id="f-book" placeholder="https://..." oninput="livePreview()"></div>
+  <div class="field"><label>Timing</label><input type="text" id="f-hours" placeholder="Daily 8am–8pm" oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-w',['wg1','wg2','wg3','wg4','wg5','wg6']);
+    addTreat(); addTreat(); addTreat();
+  },
+  build(d,fp) {
+    const treats = getItems('treat-list',['name','dur','price','desc']);
+    const gkeys = ['wg1','wg2','wg3','wg4','wg5','wg6'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const usp=v('f-usp'), book=v('f-book'), hours=v('f-hours');
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="wellness ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const css = baseCSS(d.primary,d.accent,{bg:'#fafdf8',surf:'#eef6ee'}) + `
+.hero{min-height:88vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(160deg,${d.primary}ee,${d.primary}88)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.2}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2rem,4.5vw,3.5rem);font-weight:800;margin-bottom:14px}
+.hc p{font-size:1.1rem;opacity:.88;max-width:520px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.tc{background:var(--bg);border:1px solid rgba(0,0,0,.07);border-radius:14px;padding:22px;transition:box-shadow .2s}
+.tc:hover{box-shadow:0 8px 24px rgba(0,0,0,.09)}
+.tc h3{color:var(--p);font-size:16px;font-weight:700;margin-bottom:6px}
+.tmeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.tmeta span{background:rgba(0,0,0,.05);color:var(--p);padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.tdesc{font-size:13px;color:var(--muted)}
+.wgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.wgal img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:12px}`;
+    const body = navHtml(logo,d.name,[['#about','About'],['#treatments','Treatments'],galHtml?['#gallery','Gallery']:null,['#contact','Contact']].filter(Boolean))
+      + heroSection(d,hero,
+          book?`<a href="${safe(book)}" class="btn bp" target="_blank">Book a Session</a>`:(d.phone?`<a href="${wa(d.phone)}" class="btn bp" target="_blank">Book via WhatsApp</a>`:''),
+          d.phone?`<a href="${wa(d.phone)}" class="btn bo" target="_blank">Chat on WhatsApp</a>`:'')
+      + `<section id="about"><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">Welcome</div><h2 class="st">${esc(d.name)}</h2>
+          ${usp?`<p style="color:var(--a);font-weight:600;margin-bottom:10px">${esc(usp)}</p>`:''}
+          <p class="ss">${esc(d.about)}</p>
+          ${hours?`<p style="font-size:13px;color:var(--muted);margin-top:12px">Hours: <strong>${esc(hours)}</strong></p>`:''}
+          </div>
+          <div style="background:var(--surf);border-radius:16px;padding:28px">
+            <p style="font-size:1.05rem;line-height:1.85;color:var(--p);font-style:italic">"Heal the body. Calm the mind. Restore the soul."</p>
+          </div></div></div></section>`
+      + (treats.filter(t=>t.name).length?`<section id="treatments" class="alt"><div class="wrap"><div class="sl">What We Offer</div><h2 class="st">Our Treatments</h2><div class="g3">${treats.filter(t=>t.name).map(t=>`<div class="tc"><h3>${esc(t.name)}</h3><div class="tmeta">${t.dur?`<span>${esc(t.dur)}</span>`:''} ${t.price?`<span>${esc(t.price)}</span>`:''}</div>${t.desc?`<p class="tdesc">${esc(t.desc)}</p>`:''}</div>`).join('')}</div></div></section>`:'')
+      + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Our Space</div><h2 class="st">A Place to Heal</h2><div class="wgal">${galHtml}</div></div></section>`:'')
+      + contactSection(d, book?`<div style="margin-top:32px;text-align:center"><a href="${safe(book)}" class="btn bp" target="_blank">Book Online</a></div>`:'')
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PHOTOGRAPHY / PORTFOLIO
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.photography = {
+  id:'photography', label:'Photography', industry:'Photography & Media',
+  defaultColors:{primary:'#0f1117',accent:'#e2b04c'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Packages</h3><div id="pkg-list"></div>
+  <button class="add-btn" onclick="addPkg()">+ Add Package</button></div>
+<div class="fg"><h3>Portfolio Gallery (up to 8)</h3><div class="gg" id="gal-p" style="grid-template-columns:repeat(4,1fr)"></div></div>
+<div class="fg"><h3>Profile</h3>
+  <div class="field"><label>Profile Photo</label><div class="ip"><button class="ip-btn" onclick="pickImg('profile')">Choose</button><img class="ip-thumb" id="thumb-profile"><span class="ip-name" id="iname-profile">No file</span></div></div>
+  <div class="field"><label>Specialities (comma-separated)</label><input type="text" id="f-specs" placeholder="Wedding, Portrait, Commercial" oninput="livePreview()"></div>
+  <div class="field"><label>Instagram Handle</label><input type="text" id="f-insta" placeholder="@yourhandle" oninput="livePreview()"></div>
+  <div class="field"><label>Years Experience</label><input type="text" id="f-yrs" placeholder="10+" oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-p',['pg1','pg2','pg3','pg4','pg5','pg6','pg7','pg8']);
+    addPkg(); addPkg();
+  },
+  build(d,fp) {
+    const pkgs=getItems('pkg-list',['name','price','inc']);
+    const gkeys=['pg1','pg2','pg3','pg4','pg5','pg6','pg7','pg8'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const prof=fp?(IMG.profile?.url||''):(IMG.profile?.name||'');
+    const specs=v('f-specs'), insta=v('f-insta'), yrs=v('f-yrs');
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="portfolio ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const css = baseCSS(d.primary,d.accent,{bg:'#0f1117',surf:'#1a1d27',text:'#f0f0f0'}) + `
+body{background:var(--bg);color:var(--text)}
+nav{background:rgba(15,17,23,.95);border-bottom:1px solid rgba(255,255,255,.07)}
+.nl{color:var(--a)}.nm a{color:rgba(255,255,255,.55)}.nm a:hover{color:var(--a)}
+.burger span{background:#f0f0f0}
+.hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;background:var(--bg)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.3}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2.2rem,5vw,4rem);font-weight:800;margin-bottom:14px}
+.hc p{font-size:1.1rem;opacity:.8;max-width:500px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.pgrid{columns:2;gap:10px}
+.pgrid img{width:100%;margin-bottom:10px;break-inside:avoid;border-radius:6px}
+@media(min-width:640px){.pgrid{columns:3}}@media(min-width:900px){.pgrid{columns:4}}
+.pkgc{background:var(--surf);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:26px;text-align:center;transition:border-color .2s}
+.pkgc:hover{border-color:var(--a)}
+.pkgc h3{font-size:17px;color:var(--a);margin-bottom:8px}
+.pkgp{font-size:1.7rem;font-weight:800;margin:10px 0}
+.pkgi{font-size:13px;color:var(--muted);line-height:1.8}
+.profpic{width:130px;height:130px;border-radius:50%;object-fit:cover;border:3px solid var(--a);margin:0 auto 20px;display:block}
+.spl{display:inline-block;background:rgba(226,176,76,.15);color:var(--a);padding:3px 12px;border-radius:20px;font-size:12px;margin:3px}
+section{background:var(--bg)}.alt{background:var(--surf)}
+.st{color:var(--text)}.ss{color:var(--muted)}
+.card{background:var(--surf);border-color:rgba(255,255,255,.06)}
+.cion{background:rgba(255,255,255,.07)}`;
+    const body = navHtml(logo,d.name,[galHtml?['#portfolio','Portfolio']:null,['#about','About'],pkgs.filter(p=>p.name).length?['#packages','Packages']:null,['#contact','Contact']].filter(Boolean))
+      + heroSection(d,hero,
+          `<a href="#portfolio" class="btn bp">View Portfolio</a>`,
+          d.phone?`<a href="${wa(d.phone)}" class="btn bo" target="_blank">WhatsApp</a>`:'')
+      + (galHtml?`<section id="portfolio"><div class="wrap"><div class="sl">My Work</div><h2 class="st">Portfolio</h2><div class="pgrid">${galHtml}</div></div></section>`:'')
+      + `<section id="about" class="alt"><div class="wrap"><div style="max-width:660px;margin:0 auto;text-align:center">
+          ${prof?`<img class="profpic" src="${prof}" alt="${esc(d.name)}">`:''}
+          <div class="sl">The Artist</div><h2 class="st">${esc(d.name)}</h2>
+          ${yrs?`<p style="color:var(--a);font-weight:600;margin-bottom:10px">${esc(yrs)} Years Experience</p>`:''}
+          <p class="ss" style="margin:0 auto">${esc(d.about)}</p>
+          ${specs?`<div style="margin-top:16px">${specs.split(',').map(s=>`<span class="spl">${esc(s.trim())}</span>`).join('')}</div>`:''}
+          ${insta?`<p style="margin-top:16px"><a href="https://instagram.com/${insta.replace('@','')}" target="_blank" style="color:var(--a);font-weight:600">${esc(insta)}</a></p>`:''}
+        </div></div></section>`
+      + (pkgs.filter(p=>p.name).length?`<section id="packages"><div class="wrap"><div class="sl">Invest in Memories</div><h2 class="st">Packages</h2><div class="g3">${pkgs.filter(p=>p.name).map(p=>`<div class="pkgc"><h3>${esc(p.name)}</h3>${p.price?`<div class="pkgp">${esc(p.price)}</div>`:''} ${p.inc?`<p class="pkgi">${esc(p.inc).replace(/,/g,'<br>')}</p>`:''} ${d.phone?`<a href="${wa(d.phone)}" class="btn bp" target="_blank" style="margin-top:16px;width:100%;justify-content:center">Book Now</a>`:''}</div>`).join('')}</div></div></section>`:'')
+      + contactSection(d)
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TOUR OPERATOR / TRAVEL
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.tour = {
+  id:'tour', label:'Tour Operator', industry:'Tourism & Travel',
+  defaultColors:{primary:'#1a4d6e',accent:'#e8a020'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Tour Packages</h3><div id="tour-list"></div>
+  <button class="add-btn" onclick="addTour()">+ Add Package</button></div>
+<div class="fg"><h3>Destination Gallery</h3><div class="gg" id="gal-t"></div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Languages Spoken</label><input type="text" id="f-langs" placeholder="English, Malayalam, Hindi" oninput="livePreview()"></div>
+  <div class="field"><label>WhatsApp Booking Number</label><input type="text" id="f-wa" placeholder="+91 98765 43210" oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-t',['tg1','tg2','tg3','tg4','tg5','tg6']);
+    addTour(); addTour();
+  },
+  build(d,fp) {
+    const tours=getItems('tour-list',['name','dur','price','hl']);
+    const gkeys=['tg1','tg2','tg3','tg4','tg5','tg6'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const langs=v('f-langs'), waNum=v('f-wa')||d.phone;
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="dest ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const css = baseCSS(d.primary,d.accent,{bg:'#f7fbff',surf:'#eef4fb'}) + `
+.hero{min-height:92vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(160deg,${d.primary}ee,${d.primary}88)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.25}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;margin-bottom:14px}
+.hc p{font-size:1.1rem;opacity:.88;max-width:520px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.tbar{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;padding:28px 0;background:var(--surf)}
+.tbi{text-align:center}.tbn{font-size:1.8rem;font-weight:800;color:var(--p)}.tbl{font-size:12px;color:var(--muted)}
+.tc{background:var(--bg);border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07);transition:transform .2s,box-shadow .2s}
+.tc:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(0,0,0,.12)}
+.tcb{padding:20px}
+.tc h3{font-size:17px;font-weight:700;color:var(--p);margin-bottom:7px}
+.tmeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tmeta span{background:rgba(0,0,0,.06);color:var(--p);padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.tprice{font-size:1.4rem;font-weight:800;color:var(--a);margin-bottom:10px}
+.thl{font-size:13px;color:var(--muted);line-height:1.7}
+.dgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.dgal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}`;
+    const body = navHtml(logo,d.name,[['#tours','Tours'],['#about','About'],galHtml?['#gallery','Gallery']:null,['#contact','Contact']].filter(Boolean))
+      + heroSection(d,hero,
+          waNum?`<a href="${wa(waNum)}" class="btn bp" target="_blank">Book via WhatsApp</a>`:'',
+          `<a href="#tours" class="btn bo">View Packages</a>`)
+      + `<div class="tbar"><div class="tbi"><div class="tbn">100%</div><div class="tbl">Safe Trips</div></div>
+          <div class="tbi"><div class="tbn">24/7</div><div class="tbl">Support</div></div>
+          ${langs?`<div class="tbi"><div class="tbn" style="font-size:1rem">${esc(langs)}</div><div class="tbl">Languages</div></div>`:''}</div>`
+      + (tours.filter(t=>t.name).length?`<section id="tours"><div class="wrap"><div class="sl">Explore Kerala</div><h2 class="st">Our Packages</h2><div class="g3">${tours.filter(t=>t.name).map(t=>`<div class="tc"><div class="tcb"><h3>${esc(t.name)}</h3><div class="tmeta">${t.dur?`<span>${esc(t.dur)}</span>`:''}</div>${t.price?`<div class="tprice">${esc(t.price)}</div>`:''} ${t.hl?`<p class="thl">${esc(t.hl).replace(/,/g,'<br>')}</p>`:''} ${waNum?`<a href="${wa(waNum)}" class="btn bp" target="_blank" style="margin-top:14px;width:100%;justify-content:center">Book Now</a>`:''}</div></div>`).join('')}</div></div></section>`:'')
+      + `<section id="about" class="alt"><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">About Us</div><h2 class="st">${esc(d.name)}</h2><p class="ss">${esc(d.about)}</p></div>
+          <div style="background:var(--bg);border-radius:14px;padding:28px">
+            <p style="font-size:1.05rem;line-height:1.9;color:var(--p);font-style:italic">"Kerala — God's Own Country. Let us show you why."</p>
+          </div></div></div></section>`
+      + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Destinations</div><h2 class="st">Where We Take You</h2><div class="dgal">${galHtml}</div></div></section>`:'')
+      + contactSection(d, waNum?`<div style="margin-top:32px;text-align:center"><a href="${wa(waNum)}" class="btn bp" target="_blank">Chat on WhatsApp</a></div>`:'')
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// BOUTIQUE / RETAIL SHOP
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.boutique = {
+  id:'boutique', label:'Boutique / Shop', industry:'Retail & Boutique',
+  defaultColors:{primary:'#4a1942',accent:'#d4a574'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Products / Collections</h3><div id="prod-list"></div>
+  <button class="add-btn" onclick="addProd()">+ Add Category</button></div>
+<div class="fg"><h3>Shop Gallery</h3><div class="gg" id="gal-b"></div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Store Timing</label><input type="text" id="f-hours" placeholder="Mon–Sat 10am–8pm" oninput="livePreview()"></div>
+  <div class="field"><label>Instagram Handle</label><input type="text" id="f-insta" placeholder="@yourshop" oninput="livePreview()"></div>
+  <div class="field"><label>Google Maps Embed URL</label><input type="url" id="f-maps" placeholder="https://maps.google.com/..." oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-b',['bg1','bg2','bg3','bg4','bg5','bg6']);
+    addProd(); addProd();
+  },
+  build(d,fp) {
+    const prods=getItems('prod-list',['cat','desc']);
+    const gkeys=['bg1','bg2','bg3','bg4','bg5','bg6'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const hours=v('f-hours'), insta=v('f-insta'), maps=v('f-maps');
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="product ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const css = baseCSS(d.primary,d.accent,{bg:'#fdfbf8',surf:'#f5eee8'}) + `
+.hero{min-height:86vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(135deg,${d.primary}ee,${d.primary}88)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.2}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2rem,4.5vw,3.6rem);font-weight:800;margin-bottom:14px}
+.hc p{font-size:1.05rem;opacity:.88;max-width:500px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.pcat{background:var(--bg);border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:22px;transition:box-shadow .2s}
+.pcat:hover{box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.pcat h3{font-size:16px;font-weight:700;color:var(--p);margin-bottom:8px}
+.pcat p{font-size:13px;color:var(--muted)}
+.sgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.sgal img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px}`;
+    const body = navHtml(logo,d.name,[['#about','About'],prods.filter(p=>p.cat).length?['#collections','Collections']:null,galHtml?['#gallery','Gallery']:null,['#contact','Visit Us']].filter(Boolean))
+      + heroSection(d,hero,
+          d.phone?`<a href="${wa(d.phone)}" class="btn bp" target="_blank">Order on WhatsApp</a>`:'',
+          `<a href="#collections" class="btn bo">Shop Now</a>`)
+      + `<section id="about"><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">Our Story</div><h2 class="st">${esc(d.name)}</h2><p class="ss">${esc(d.about)}</p>
+          ${insta?`<p style="margin-top:16px"><a href="https://instagram.com/${insta.replace('@','')}" target="_blank" style="color:var(--a);font-weight:600">${esc(insta)} on Instagram</a></p>`:''}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          ${hours?`<div class="card" style="padding:16px;text-align:center"><div style="font-size:1.3rem">🕐</div><div style="font-size:10px;color:var(--muted);margin:4px 0">Hours</div><div style="font-weight:600;font-size:12px">${esc(hours)}</div></div>`:''}
+          ${d.phone?`<div class="card" style="padding:16px;text-align:center"><div style="font-size:1.3rem">📞</div><div style="font-size:10px;color:var(--muted);margin:4px 0">Call/WhatsApp</div><div style="font-weight:600;font-size:12px">${esc(d.phone)}</div></div>`:''}
+          </div></div></div></section>`
+      + (prods.filter(p=>p.cat).length?`<section id="collections" class="alt"><div class="wrap"><div class="sl">What We Offer</div><h2 class="st">Collections</h2><div class="g3">${prods.filter(p=>p.cat).map(p=>`<div class="pcat"><h3>${esc(p.cat)}</h3>${p.desc?`<p>${esc(p.desc)}</p>`:''}</div>`).join('')}</div></div></section>`:'')
+      + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Our Products</div><h2 class="st">Gallery</h2><div class="sgal">${galHtml}</div></div></section>`:'')
+      + contactSection(d, maps?`<div style="margin-top:32px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:'')
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+
+// ─── Item adders ──────────────────────────────────────────────────────────────
+function addMenuItem(){addItem('menu-list',`
+  <div class="field"><label>Category</label><input type="text" data-f="cat" placeholder="Starters" oninput="livePreview()"></div>
+  <div class="field"><label>Items (comma-separated, use - for price)</label><input type="text" data-f="items" placeholder="Chicken 65 - ₹180, Fish Fry - ₹220" oninput="livePreview()"></div>`);}
+function addTreat(){addItem('treat-list',`
+  <div class="field"><label>Treatment</label><input type="text" data-f="name" placeholder="Abhyanga Massage" oninput="livePreview()"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <div class="field"><label>Duration</label><input type="text" data-f="dur" placeholder="60 min" oninput="livePreview()"></div>
+    <div class="field"><label>Price</label><input type="text" data-f="price" placeholder="₹2,500" oninput="livePreview()"></div>
+  </div>
+  <div class="field"><label>Description</label><input type="text" data-f="desc" placeholder="Full body oil massage..." oninput="livePreview()"></div>`);}
+function addPkg(){addItem('pkg-list',`
+  <div class="field"><label>Package Name</label><input type="text" data-f="name" placeholder="Wedding Package" oninput="livePreview()"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <div class="field"><label>Price</label><input type="text" data-f="price" placeholder="₹35,000" oninput="livePreview()"></div>
+  </div>
+  <div class="field"><label>Includes (comma-separated)</label><input type="text" data-f="inc" placeholder="8 hrs, 500 edited photos, album" oninput="livePreview()"></div>`);}
+function addTour(){addItem('tour-list',`
+  <div class="field"><label>Package Name</label><input type="text" data-f="name" placeholder="Alleppey Day Trip" oninput="livePreview()"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <div class="field"><label>Duration</label><input type="text" data-f="dur" placeholder="Full Day" oninput="livePreview()"></div>
+    <div class="field"><label>Price</label><input type="text" data-f="price" placeholder="₹1,800/person" oninput="livePreview()"></div>
+  </div>
+  <div class="field"><label>Highlights (comma-separated)</label><input type="text" data-f="hl" placeholder="Chinese Nets, Backwaters, Village" oninput="livePreview()"></div>`);}
+function addProd(){addItem('prod-list',`
+  <div class="field"><label>Category</label><input type="text" data-f="cat" placeholder="Silk Sarees" oninput="livePreview()"></div>
+  <div class="field"><label>Description</label><input type="text" data-f="desc" placeholder="Handwoven in Kerala..." oninput="livePreview()"></div>`);}
+
+// ─── Template selector ────────────────────────────────────────────────────────
+let current = null;
+
+function selectTpl(id) {
+  current = id;
+  document.querySelectorAll('.tpl-card').forEach(c=>c.classList.toggle('active',c.dataset.id===id));
+  TEMPLATES[id].onSelect();
+  livePreview();
+}
+
+function buildGrid() {
+  const g = document.getElementById('tpl-grid');
+  Object.values(TEMPLATES).forEach(t=>{
+    const c=document.createElement('div'); c.className='tpl-card'; c.dataset.id=t.id;
+    c.innerHTML=`<div class="tpl-name">${t.label}</div><div class="tpl-ind">${t.industry}</div>`;
+    c.onclick=()=>selectTpl(t.id); g.appendChild(c);
+  });
+}
+
+// ─── Preview ──────────────────────────────────────────────────────────────────
+function livePreview() {
+  if(!current) return;
+  const d = common();
+  const result = TEMPLATES[current].build(d, true);
+  const combined = result['index.html'].replace('<link rel="stylesheet" href="style.css">',`<style>${result['style.css']}</style>`);
+  document.getElementById('preview-iframe').srcdoc = combined;
+}
+
+// ─── Generate ─────────────────────────────────────────────────────────────────
+async function generate() {
+  if(!current){alert('Select a template first.');return;}
+  const nm=v('f-name'); if(!nm){alert('Business Name is required.');return;}
+  const d = common();
+  const result = TEMPLATES[current].build(d, false);
+  const ts = new Date().toISOString().replace(/[-:T]/g,'').slice(0,14);
+  const folder = `${nm.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'')}-${ts}`;
+  let root;
+  try{root=await window.showDirectoryPicker({mode:'readwrite'});}catch{return;}
+  const dir = await root.getDirectoryHandle(folder,{create:true});
+  for(const[fn,content] of Object.entries(result)){
+    const fh=await dir.getFileHandle(fn,{create:true});
+    const w=await fh.createWritable(); await w.write(content); await w.close();
+  }
+  const imgKeys=['logo','hero','profile','rg1','rg2','rg3','rg4','rg5','rg6',
+    'wg1','wg2','wg3','wg4','wg5','wg6','pg1','pg2','pg3','pg4','pg5','pg6','pg7','pg8',
+    'tg1','tg2','tg3','tg4','tg5','tg6','bg1','bg2','bg3','bg4','bg5','bg6'];
+  for(const k of imgKeys){
+    const img=IMG[k]; if(!img) continue;
+    try{const fh=await dir.getFileHandle(img.name,{create:true});const w=await fh.createWritable();await w.write(await img.file.arrayBuffer());await w.close();}catch{}
+  }
+  alert(`Generated: ${folder}/`);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+buildGrid();
+selectTpl('restaurant');
+</script>
+</body>
+</html>

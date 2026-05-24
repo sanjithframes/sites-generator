@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Generator</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0d0d14;
+  --surface:  #13131c;
+  --surface2: #1a1a26;
+  --border:   #252535;
+  --text:     #e2e8f0;
+  --muted:    #8892a4;
+  --accent:   #6366f1;
+  --green:    #22c55e;
+  --red:      #ef4444;
+  --font:     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1.5rem;
+  height: 52px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.header h1 { font-size: 1rem; font-weight: 700; }
+
+.tag {
+  background: var(--accent);
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.header-hint { margin-left: auto; font-size: 0.75rem; color: var(--muted); }
+
+/* ── Compat bar ── */
+.compat-bar {
+  display: none;
+  background: #451a03;
+  border-bottom: 1px solid #92400e;
+  color: #fbbf24;
+  font-size: 0.8rem;
+  padding: 0.5rem 1.5rem;
+}
+.compat-bar.show { display: block; }
+
+/* ── Layout ── */
+.layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Form panel ── */
+.panel {
+  width: 400px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.panel::-webkit-scrollbar { width: 4px; }
+.panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.section-head {
+  font-size: 0.63rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--border);
+  margin-top: 0.2rem;
+}
+
+.field { display: flex; flex-direction: column; gap: 0.28rem; }
+
+.field label { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
+.field label .req { color: var(--red); margin-left: 2px; }
+
+.field input[type=text],
+.field select,
+.field textarea {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.85rem;
+  font-family: var(--font);
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--accent);
+}
+
+.field textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+.field input[readonly] { opacity: 0.5; cursor: not-allowed; }
+
+/* Color row */
+.color-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+
+.color-wrap {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.38rem 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: border-color 0.15s;
+}
+.color-wrap:focus-within { border-color: var(--accent); }
+
+.color-wrap input[type=color] {
+  width: 24px; height: 24px;
+  border: none; background: none; padding: 0;
+  cursor: pointer; border-radius: 3px; flex-shrink: 0;
+}
+
+.color-wrap input[type=text] {
+  background: none; border: none;
+  color: var(--text);
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  padding: 0; width: 100%; outline: none;
+}
+
+/* Generate button */
+.gen-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 7px;
+  padding: 0.72rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  margin-top: 0.2rem;
+  letter-spacing: 0.01em;
+}
+.gen-btn:hover { opacity: 0.87; }
+.gen-btn:active { transform: scale(0.99); }
+.gen-btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none; }
+
+/* Status */
+.status {
+  border-radius: 6px;
+  padding: 0.7rem 0.8rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  white-space: pre-line;
+  display: none;
+}
+.status.ok  { background: #052e16; border: 1px solid #166534; color: #4ade80; display: block; }
+.status.err { background: #450a0a; border: 1px solid #991b1b; color: #f87171; display: block; }
+
+/* ── Preview pane ── */
+.preview-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.preview-bar {
+  height: 36px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  gap: 0.45rem;
+  font-size: 0.73rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+.preview-pane iframe { flex: 1; border: none; background: white; }
+
+/* ── Responsive ── */
+@media (max-width: 720px) {
+  .layout { flex-direction: column; overflow-y: auto; }
+  .panel  { width: 100%; border-right: none; border-bottom: 1px solid var(--border); overflow-y: visible; }
+  .preview-pane iframe { height: 420px; }
+  body { overflow: auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="compat-bar" id="compatBar">
+  &#9888; File System Access API not available — use Chrome or Edge 86+ to save generated files.
+</div>
+
+<header class="header">
+  <h1>Site Generator</h1>
+  <span class="tag">Offline</span>
+  <span class="header-hint">Fill form &rarr; Generate &rarr; Open locally or host anywhere</span>
+</header>
+
+<div class="layout">
+
+  <!-- ── Form panel ── -->
+  <aside class="panel">
+
+    <div class="section-head">Site Info</div>
+
+    <div class="field">
+      <label>Site Name <span class="req">*</span></label>
+      <input type="text" id="siteName" placeholder="My Portfolio" oninput="updatePreview()">
+    </div>
+
+    <div class="field">
+      <label>Author</label>
+      <input type="text" id="author" placeholder="Your name" oninput="updatePreview()">
+    </div>
+
+    <div class="field">
+      <label>Tagline</label>
+      <input type="text" id="tagline" placeholder="Designer &middot; Developer &middot; Creator" oninput="updatePreview()">
+    </div>
+
+    <div class="field">
+      <label>Description</label>
+      <textarea id="description" placeholder="What is this site about?" oninput="updatePreview()"></textarea>
+    </div>
+
+    <div class="section-head">Appearance</div>
+
+    <div class="color-row">
+      <div class="field">
+        <label>Primary Color</label>
+        <div class="color-wrap">
+          <input type="color" id="cpPrimary" value="#6366f1" oninput="syncColor('Primary')">
+          <input type="text"  id="chPrimary" value="#6366f1" maxlength="7" oninput="syncHex('Primary')">
+        </div>
+      </div>
+      <div class="field">
+        <label>Accent Color</label>
+        <div class="color-wrap">
+          <input type="color" id="cpAccent" value="#f59e0b" oninput="syncColor('Accent')">
+          <input type="text"  id="chAccent" value="#f59e0b" maxlength="7" oninput="syncHex('Accent')">
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">Options</div>
+
+    <div class="field">
+      <label>Template</label>
+      <select id="template" onchange="updatePreview()">
+        <option value="basic">Basic Landing Page</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Created (auto-filled)</label>
+      <input type="text" id="created" readonly>
+    </div>
+
+    <button class="gen-btn" onclick="generate()">Generate Website &rarr;</button>
+
+    <div class="status" id="status"></div>
+
+  </aside>
+
+  <!-- ── Preview pane ── -->
+  <main class="preview-pane">
+    <div class="preview-bar">
+      <span class="dot"></span>
+      Live Preview &mdash; updates as you type
+    </div>
+    <iframe id="preview" title="Site preview"></iframe>
+  </main>
+
+</div>
+
+<script>
+'use strict';
+
+// ── Browser check ────────────────────────────────────────────────────────────
+if (!('showDirectoryPicker' in window)) {
+  document.getElementById('compatBar').classList.add('show');
+}
+
+// ── Auto timestamp ────────────────────────────────────────────────────────────
+const createdAt = new Date();
+document.getElementById('created').value = createdAt.toLocaleString('en-GB', {
+  year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', second: '2-digit',
+});
+
+// ── Color sync ────────────────────────────────────────────────────────────────
+function syncColor(id) {
+  document.getElementById('ch' + id).value = document.getElementById('cp' + id).value;
+  updatePreview();
+}
+
+function syncHex(id) {
+  const hex = document.getElementById('ch' + id).value;
+  if (/^#[0-9a-f]{6}$/i.test(hex)) {
+    document.getElementById('cp' + id).value = hex;
+    updatePreview();
+  }
+}
+
+// ── Read form ─────────────────────────────────────────────────────────────────
+function getData() {
+  return {
+    siteName:    document.getElementById('siteName').value.trim()    || 'My Website',
+    author:      document.getElementById('author').value.trim(),
+    tagline:     document.getElementById('tagline').value.trim(),
+    description: document.getElementById('description').value.trim(),
+    primary:     document.getElementById('chPrimary').value,
+    accent:      document.getElementById('chAccent').value,
+    template:    document.getElementById('template').value,
+    created:     document.getElementById('created').value,
+  };
+}
+
+// ── HTML escaping ─────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── Template: Basic Landing Page ──────────────────────────────────────────────
+function buildCSS(d) {
+  return `/* Generated by Site Generator */
+:root {
+  --primary: ${d.primary};
+  --accent:  ${d.accent};
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f8fafc;
+  color: #1e293b;
+  line-height: 1.6;
+}
+
+/* Nav */
+nav {
+  position: sticky;
+  top: 0;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 2rem;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+}
+.nav-brand { font-weight: 700; font-size: 1.05rem; color: var(--primary); }
+.nav-sub   { font-size: 0.78rem; color: #64748b; }
+
+/* Hero */
+.hero {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  color: white;
+  padding: 5rem 2rem;
+  text-align: center;
+}
+.hero h1 {
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+.hero .tagline {
+  font-size: clamp(0.95rem, 2vw, 1.2rem);
+  opacity: 0.88;
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+/* Container */
+.container { max-width: 840px; margin: 0 auto; padding: 4rem 2rem; }
+.block { margin-bottom: 3.5rem; }
+
+h2 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  display: inline-block;
+  padding-bottom: 0.5rem;
+  border-bottom: 3px solid var(--accent);
+}
+
+.lead {
+  color: #475569;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  margin-top: 0.5rem;
+}
+
+/* Cards */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.07); transform: translateY(-2px); }
+.card-icon  { font-size: 1.5rem; margin-bottom: 0.5rem; }
+.card h3    { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem; }
+.card p     { font-size: 0.82rem; color: #64748b; }
+
+/* Footer */
+footer {
+  background: #1e293b;
+  color: rgba(255,255,255,0.45);
+  text-align: center;
+  padding: 1.75rem 2rem;
+  font-size: 0.82rem;
+}
+footer strong { color: rgba(255,255,255,0.85); }
+`;
+}
+
+function buildHTML(d) {
+  const name    = esc(d.siteName);
+  const author  = esc(d.author);
+  const tagline = esc(d.tagline);
+  const desc    = esc(d.description);
+  const created = esc(d.created);
+
+  const aboutBlock = desc ? `
+  <div class="block">
+    <h2>About</h2>
+    <p class="lead">${desc}</p>
+  </div>` : '';
+
+  const navSub    = author ? `By ${author}` : '';
+  const footerBy  = author ? `<strong>${author}</strong> &middot; ` : '';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${name}</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="description" content="${tagline || desc.slice(0, 120)}">
+  <meta name="author"  content="${author}">
+  <meta name="created" content="${created}">
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">${name}</span>
+  <span class="nav-sub">${navSub}</span>
+</nav>
+
+<section class="hero">
+  <h1>${name}</h1>
+  ${tagline ? `<p class="tagline">${tagline}</p>` : ''}
+</section>
+
+<div class="container">
+
+  ${aboutBlock}
+
+  <div class="block">
+    <h2>Features</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">&#9889;</div>
+        <h3>Fast</h3>
+        <p>Pure HTML &amp; CSS — no heavy frameworks, instant load.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128241;</div>
+        <h3>Responsive</h3>
+        <p>Looks great on desktop, tablet, and mobile.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#127912;</div>
+        <h3>Customizable</h3>
+        <p>Edit style.css to change colors, fonts, and layout.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  ${footerBy}${name} &mdash; Generated on ${created}
+</footer>
+
+</body>
+</html>`;
+}
+
+// ── Template registry (add more here over time) ───────────────────────────────
+const TEMPLATES = {
+  basic: {
+    label: 'Basic Landing Page',
+    build(d) {
+      return {
+        'index.html': buildHTML(d),
+        'style.css':  buildCSS(d),
+      };
+    }
+  }
+};
+
+// ── Live preview ──────────────────────────────────────────────────────────────
+function updatePreview() {
+  const d    = getData();
+  const tmpl = TEMPLATES[d.template];
+  if (!tmpl) return;
+
+  const files = tmpl.build(d);
+  // Inline the CSS so the iframe preview renders without file access
+  const html = files['index.html'].replace(
+    '<link rel="stylesheet" href="style.css">',
+    `<style>\n${files['style.css']}\n</style>`
+  );
+
+  document.getElementById('preview').srcdoc = html;
+}
+
+// ── Generate & save ───────────────────────────────────────────────────────────
+async function generate() {
+  const rawName = document.getElementById('siteName').value.trim();
+  if (!rawName) {
+    showStatus('err', 'Please enter a Site Name before generating.');
+    return;
+  }
+
+  if (!('showDirectoryPicker' in window)) {
+    showStatus('err', 'Your browser does not support the File System API.\nPlease open this file in Chrome or Edge 86+.');
+    return;
+  }
+
+  const btn = document.querySelector('.gen-btn');
+  btn.disabled = true;
+  btn.textContent = 'Choose a folder...';
+  clearStatus();
+
+  try {
+    // Let user pick the parent folder
+    const rootDir = await window.showDirectoryPicker({ mode: 'readwrite' });
+
+    const d = getData();
+
+    // Folder name: slug + timestamp  e.g. "my-portfolio-2026-05-23-14-30-00"
+    const slug    = d.siteName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const dateTag = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+    const folder  = `${slug}-${dateTag}`;
+
+    btn.textContent = 'Writing files...';
+
+    // Create subfolder
+    const siteDir = await rootDir.getDirectoryHandle(folder, { create: true });
+
+    // Write each file
+    const files = TEMPLATES[d.template].build(d);
+    for (const [fname, content] of Object.entries(files)) {
+      const fh = await siteDir.getFileHandle(fname, { create: true });
+      const w  = await fh.createWritable();
+      await w.write(content);
+      await w.close();
+    }
+
+    showStatus('ok',
+      '✓ Site generated successfully!\n' +
+      'Folder : ' + folder + '/\n' +
+      'Files  : ' + Object.keys(files).join(', ') + '\n\n' +
+      'Open index.html in any browser to view your site.'
+    );
+
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      showStatus('err', 'Error: ' + err.message);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate Website →';
+  }
+}
+
+function showStatus(type, msg) {
+  const el = document.getElementById('status');
+  el.className = 'status ' + type;
+  el.textContent = msg;
+}
+
+function clearStatus() {
+  const el = document.getElementById('status');
+  el.className = 'status';
+  el.textContent = '';
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+updatePreview();
+</script>
+
+</body>
+</html>
