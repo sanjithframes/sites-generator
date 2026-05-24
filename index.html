@@ -679,13 +679,208 @@ async function generate() {
   }
   const imgKeys=['logo','hero','profile','rg1','rg2','rg3','rg4','rg5','rg6',
     'wg1','wg2','wg3','wg4','wg5','wg6','pg1','pg2','pg3','pg4','pg5','pg6','pg7','pg8',
-    'tg1','tg2','tg3','tg4','tg5','tg6','bg1','bg2','bg3','bg4','bg5','bg6'];
+    'tg1','tg2','tg3','tg4','tg5','tg6','bg1','bg2','bg3','bg4','bg5','bg6','fg1','fg2','fg3','fg4','fg5','fg6'];
   for(const k of imgKeys){
     const img=IMG[k]; if(!img) continue;
     try{const fh=await dir.getFileHandle(img.name,{create:true});const w=await fh.createWritable();await w.write(await img.file.arrayBuffer());await w.close();}catch{}
   }
   alert(`Generated: ${folder}/`);
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FITNESS & GYM  (inspired by crossfittustin.com structure)
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.fitness = {
+  id:'fitness', label:'Fitness & Gym', industry:'Fitness & Gym',
+  defaultColors:{primary:'#111111',accent:'#e63329'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Programs</h3><div id="prog-list"></div>
+  <button class="add-btn" onclick="addProg()">+ Add Program</button></div>
+<div class="fg"><h3>How to Get Started (3 Steps)</h3><div id="step-list"></div>
+  <button class="add-btn" onclick="addStep()">+ Add Step</button></div>
+<div class="fg"><h3>Testimonials</h3><div id="test-list"></div>
+  <button class="add-btn" onclick="addTest()">+ Add Testimonial</button></div>
+<div class="fg"><h3>FAQ</h3><div id="faq-list"></div>
+  <button class="add-btn" onclick="addFaq()">+ Add FAQ</button></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Booking / Intro Link</label><input type="url" id="f-book" placeholder="https://..." oninput="livePreview()"></div>
+  <div class="field"><label>Opening Hours</label><input type="text" id="f-hours" placeholder="Mon–Fri 5am–8pm, Sat 7am–11am" oninput="livePreview()"></div>
+  <div class="field"><label>Instagram Handle</label><input type="text" id="f-insta" placeholder="@yourgym" oninput="livePreview()"></div>
+</div>`;
+    addProg(); addProg(); addProg();
+    addStep(); addStep(); addStep();
+    addTest(); addTest();
+    addFaq(); addFaq(); addFaq();
+  },
+  build(d,fp) {
+    const progs = getItems('prog-list',['name','desc']);
+    const steps = getItems('step-list',['title','desc']);
+    const tests = getItems('test-list',['name','quote','sub']);
+    const faqs  = getItems('faq-list',['q','a']);
+    const hero  = fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo  = fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const book  = v('f-book'), hours = v('f-hours'), insta = v('f-insta');
+
+    const css = baseCSS(d.primary,d.accent,{bg:'#ffffff',surf:'#f5f5f5',text:'#111111'}) + `
+:root{--p:${d.primary};--a:${d.accent}}
+nav{background:#fff;border-bottom:2px solid #f0f0f0}
+.nl{color:var(--p);font-size:20px;letter-spacing:-0.5px}
+.nm a{color:#444;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+.nm a:hover{color:var(--a)}
+.hero{min-height:95vh;display:flex;align-items:center;position:relative;overflow:hidden;background:var(--p)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.28}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2.8rem,6vw,5rem);font-weight:900;line-height:1.0;letter-spacing:-1px;margin-bottom:16px;text-transform:uppercase}
+.hc p{font-size:clamp(1rem,2vw,1.25rem);opacity:.8;max-width:520px;margin-bottom:32px;font-weight:500}
+.hbtns{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:14px 30px;border-radius:4px;font-weight:700;font-size:14px;cursor:pointer;border:none;transition:transform .15s,opacity .15s;text-transform:uppercase;letter-spacing:.5px}
+.btn:hover{transform:translateY(-2px);opacity:.92}
+.bp{background:var(--a);color:#fff}
+.bo{background:transparent;border:2px solid rgba(255,255,255,.5);color:#fff}
+/* Steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:32px}
+.step{display:flex;gap:20px;align-items:flex-start}
+.step-num{font-size:3.5rem;font-weight:900;color:var(--a);line-height:1;flex-shrink:0;opacity:.9}
+.step-body h3{font-size:17px;font-weight:800;margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+.step-body p{font-size:14px;color:#555;line-height:1.7}
+/* Programs */
+.prog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:2px;background:#e8e8e8}
+.prog{background:#fff;padding:36px 28px;transition:background .2s}
+.prog:hover{background:var(--p)}
+.prog:hover h3,.prog:hover p{color:#fff}
+.prog h3{font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;transition:color .2s}
+.prog p{font-size:14px;color:#555;line-height:1.7;transition:color .2s}
+.prog .arr{display:inline-block;margin-top:16px;font-weight:700;color:var(--a);font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+.prog:hover .arr{color:#fff}
+/* Testimonials */
+.tcard{background:#fff;border-left:4px solid var(--a);padding:28px;border-radius:0 8px 8px 0}
+.tquote{font-size:1.05rem;line-height:1.8;color:#333;margin-bottom:16px;font-style:italic}
+.tname{font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:.5px}
+.tsub{font-size:12px;color:#888;margin-top:2px}
+/* FAQ */
+.faq-item{border-bottom:1px solid #e8e8e8;padding:20px 0}
+.faq-q{font-size:16px;font-weight:700;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.faq-q::after{content:"+";font-size:22px;color:var(--a);font-weight:300;flex-shrink:0}
+.faq-a{font-size:14px;color:#555;line-height:1.75}
+/* Hours bar */
+.hours-bar{background:var(--p);color:#fff;padding:28px 0;text-align:center}
+.hours-bar h3{font-size:12px;text-transform:uppercase;letter-spacing:2px;color:var(--a);margin-bottom:6px}
+.hours-bar p{font-size:1.1rem;font-weight:700}
+/* CTA band */
+.cta-band{background:var(--a);padding:64px 0;text-align:center;color:#fff}
+.cta-band h2{font-size:clamp(1.8rem,4vw,3rem);font-weight:900;text-transform:uppercase;letter-spacing:-0.5px;margin-bottom:12px}
+.cta-band p{font-size:1.05rem;opacity:.88;margin-bottom:28px}
+.btn-white{background:#fff;color:var(--a);border:none}`;
+
+    const stepsHtml = steps.filter(s=>s.title).map((s,i)=>`
+      <div class="step">
+        <div class="step-num">0${i+1}</div>
+        <div class="step-body"><h3>${esc(s.title)}</h3><p>${esc(s.desc)}</p></div>
+      </div>`).join('');
+
+    const progsHtml = progs.filter(p=>p.name).map(p=>`
+      <div class="prog">
+        <h3>${esc(p.name)}</h3>
+        <p>${esc(p.desc)}</p>
+        ${book?`<a href="${safe(book)}" class="arr" target="_blank">Learn More &rarr;</a>`:''}
+      </div>`).join('');
+
+    const testsHtml = tests.filter(t=>t.quote).map(t=>`
+      <div class="tcard">
+        <p class="tquote">"${esc(t.quote)}"</p>
+        <div class="tname">${esc(t.name)}</div>
+        ${t.sub?`<div class="tsub">${esc(t.sub)}</div>`:''}
+      </div>`).join('');
+
+    const faqsHtml = faqs.filter(f=>f.q).map(f=>`
+      <div class="faq-item">
+        <div class="faq-q">${esc(f.q)}</div>
+        <div class="faq-a">${esc(f.a)}</div>
+      </div>`).join('');
+
+    const body = navHtml(logo,d.name,[
+        book?['#start','Get Started']:null,
+        progs.filter(p=>p.name).length?['#programs','Programs']:null,
+        tests.filter(t=>t.quote).length?['#members','Members']:null,
+        faqs.filter(f=>f.q).length?['#faq','FAQ']:null,
+        ['#contact','Contact']
+      ].filter(Boolean))
+      + `<section class="hero">
+          ${hero?`<img class="hbg" src="${hero}" alt="">`:''}
+          <div class="wrap"><div class="hc">
+            <h1>${esc(d.name)}</h1>
+            <p>${esc(d.tagline||'Train Hard. Have Fun. Get Results.')}</p>
+            <div class="hbtns">
+              ${book?`<a href="${safe(book)}" class="btn bp" target="_blank">Book Free Intro</a>`:''}
+              ${progs.filter(p=>p.name).length?`<a href="#programs" class="btn bo">Our Programs</a>`:''}
+            </div>
+          </div></div>
+        </section>`
+      + (stepsHtml?`<section id="start"><div class="wrap">
+          <div class="sl">Getting Started</div>
+          <h2 class="st">3 Simple Steps</h2>
+          <p class="ss">${esc(d.about)}</p>
+          <div class="steps">${stepsHtml}</div>
+        </div></section>`:`<section id="start"><div class="wrap">
+          <div class="sl">About Us</div><h2 class="st">${esc(d.name)}</h2>
+          <p class="ss">${esc(d.about)}</p></div></section>`)
+      + (progsHtml?`<section id="programs" class="alt" style="padding:0">
+          <div class="wrap" style="padding-top:64px;padding-bottom:32px">
+            <div class="sl">What We Offer</div>
+            <h2 class="st">Our Programs</h2>
+          </div>
+          <div class="prog-grid">${progsHtml}</div>
+          <div style="height:64px;background:var(--surf)"></div>
+        </section>`:'')
+      + (testsHtml?`<section id="members"><div class="wrap">
+          <div class="sl">Member Stories</div>
+          <h2 class="st">What Our Members Say</h2>
+          <div class="g2">${testsHtml}</div>
+        </div></section>`:'')
+      + (faqsHtml?`<section id="faq" class="alt"><div class="wrap">
+          <div class="sl">Common Questions</div>
+          <h2 class="st">FAQ</h2>
+          <div style="max-width:740px">${faqsHtml}</div>
+        </div></section>`:'')
+      + (book?`<div class="cta-band">
+          <div class="wrap">
+            <h2>Ready to Start?</h2>
+            <p>Your first class is on us. No experience needed.</p>
+            <a href="${safe(book)}" class="btn btn-white" target="_blank">Book Your Free Intro</a>
+          </div>
+        </div>`:'')
+      + (hours?`<div class="hours-bar"><div class="wrap"><h3>Opening Hours</h3><p>${esc(hours)}</p></div></div>`:'')
+      + `<section id="contact"><div class="wrap">
+          <div class="sl">Find Us</div><h2 class="st">Contact</h2>
+          <div class="cg">
+            ${d.address?`<div class="ci"><div class="cion">📍</div><div><h4>Address</h4><p>${esc(d.address)}</p></div></div>`:''}
+            ${d.phone?`<div class="ci"><div class="cion">📞</div><div><h4>Phone</h4><p>${esc(d.phone)}</p></div></div>`:''}
+            ${d.email?`<div class="ci"><div class="cion">✉️</div><div><h4>Email</h4><p>${esc(d.email)}</p></div></div>`:''}
+            ${insta?`<div class="ci"><div class="cion">📸</div><div><h4>Instagram</h4><p><a href="https://instagram.com/${insta.replace('@','')}" target="_blank" style="color:var(--a);font-weight:600">${esc(insta)}</a></p></div></div>`:''}
+          </div>
+        </div></section>`
+      + footerHtml(d.name);
+
+    const css2 = css;
+    return {'index.html':wrap(d.name,css2,body,d.phone),'style.css':css2};
+  }
+};
+
+function addProg(){addItem('prog-list',`
+  <div class="field"><label>Program Name</label><input type="text" data-f="name" placeholder="CrossFit / HIIT / Yoga" oninput="livePreview()"></div>
+  <div class="field"><label>Description</label><textarea data-f="desc" rows="2" placeholder="What this program offers..." oninput="livePreview()"></textarea></div>`);}
+function addStep(){addItem('step-list',`
+  <div class="field"><label>Step Title</label><input type="text" data-f="title" placeholder="Book a Free Intro" oninput="livePreview()"></div>
+  <div class="field"><label>Description</label><input type="text" data-f="desc" placeholder="Meet a coach, see the gym, no commitment." oninput="livePreview()"></div>`);}
+function addTest(){addItem('test-list',`
+  <div class="field"><label>Member Name</label><input type="text" data-f="name" placeholder="Arun K." oninput="livePreview()"></div>
+  <div class="field"><label>Quote</label><textarea data-f="quote" rows="2" placeholder="Best decision I ever made..." oninput="livePreview()"></textarea></div>
+  <div class="field"><label>Member Since / Role</label><input type="text" data-f="sub" placeholder="Member since 2023" oninput="livePreview()"></div>`);}
+function addFaq(){addItem('faq-list',`
+  <div class="field"><label>Question</label><input type="text" data-f="q" placeholder="Do I need experience to join?" oninput="livePreview()"></div>
+  <div class="field"><label>Answer</label><input type="text" data-f="a" placeholder="Not at all. We welcome all fitness levels." oninput="livePreview()"></div>`);}
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 buildGrid();
