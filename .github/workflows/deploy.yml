@@ -1,4 +1,4 @@
-name: Deploy to generator.smart-forms.in
+name: Deploy to engine.smart-forms.in
 
 on:
   push:
@@ -10,11 +10,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Copy index.html to VPS
+      - name: Upload index.html to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: root
           password: ${{ secrets.VPS_PASSWORD }}
           source: "index.html"
-          target: "/var/www/generator/"
+          target: "/var/www/sites/engine/"
