@@ -1,0 +1,43 @@
+GIT STEPS — Site Generator Repo
+=================================
+
+FIRST TIME SETUP (already done)
+---------------------------------
+git init
+git add .
+git commit -m "initial commit"
+
+-- Add remote (do once when pushing to GitHub):
+git remote add origin https://github.com/YOUR_USERNAME/site-generator-repo.git
+git branch -M main
+git push -u origin main
+
+
+DAILY WORKFLOW
+---------------------------------
+1. Check what changed:
+   git status
+
+2. Stage all changes:
+   git add .
+
+3. Commit with a message:
+   git commit -m "add real estate template"
+
+4. Push to GitHub:
+   git push
+
+
+USEFUL COMMANDS
+---------------------------------
+git log --oneline          -- see commit history
+git diff                   -- see unstaged changes
+git diff --staged          -- see staged changes
+git status                 -- see current state
+
+
+AFTER ADDING EACH NEW TEMPLATE
+---------------------------------
+git add index.html
+git commit -m "add [template name] template"
+git push

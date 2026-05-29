@@ -882,6 +882,936 @@ function addFaq(){addItem('faq-list',`
   <div class="field"><label>Question</label><input type="text" data-f="q" placeholder="Do I need experience to join?" oninput="livePreview()"></div>
   <div class="field"><label>Answer</label><input type="text" data-f="a" placeholder="Not at all. We welcome all fitness levels." oninput="livePreview()"></div>`);}
 
+// ══════════════════════════════════════════════════════════════════════════════
+// REAL ESTATE
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.realestate = {
+  id:'realestate', label:'Real Estate', industry:'Real Estate',
+  defaultColors:{primary:'#1a3a5c',accent:'#c8a55a'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Listings</h3><div id="prop-list"></div>
+  <button class="add-btn" onclick="addProp()">+ Add Property</button></div>
+<div class="fg"><h3>Gallery</h3><div class="gg" id="gal-re"></div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Agent / Brand</label><input type="text" id="f-agent" placeholder="John Doe Properties" oninput="livePreview()"></div>
+  <div class="field"><label>Enquiry WhatsApp</label><input type="text" id="f-wa" placeholder="+91 98765 43210" oninput="livePreview()"></div>
+  <div class="field"><label>License / RERA No.</label><input type="text" id="f-rera" placeholder="RERA No. KL/2023/001" oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-re',['re1','re2','re3','re4','re5','re6']);
+    addProp(); addProp();
+  },
+  build(d,fp) {
+    const props=getItems('prop-list',['name','type','price','beds']);
+    const gkeys=['re1','re2','re3','re4','re5','re6'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const agent=v('f-agent'), waNum=v('f-wa')||d.phone, rera=v('f-rera');
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="property ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const css = baseCSS(d.primary,d.accent,{bg:'#f8fbff',surf:'#eef4fb'}) + `
+.hero{min-height:88vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(135deg,${d.primary}ee,${d.primary}99)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.2}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2rem,4.5vw,3.6rem);font-weight:800;margin-bottom:14px}
+.hc p{font-size:1.05rem;opacity:.88;max-width:520px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.pcard{background:var(--bg);border:1px solid rgba(0,0,0,.08);border-radius:14px;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.pcard:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(0,0,0,.1)}
+.pcb{padding:18px}
+.ptype{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--a);font-weight:700;margin-bottom:6px}
+.pcard h3{font-size:16px;font-weight:700;margin-bottom:8px}
+.pprice{font-size:1.4rem;font-weight:800;color:var(--p);margin-bottom:8px}
+.pmeta{font-size:13px;color:var(--muted)}
+.rgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.rgal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}`;
+    const body = navHtml(logo,d.name,[['#listings','Listings'],['#about','About'],galHtml?['#gallery','Gallery']:null,['#contact','Contact']].filter(Boolean))
+      + heroSection(d,hero, waNum?`<a href="${wa(waNum)}" class="btn bp" target="_blank">Enquire on WhatsApp</a>`:'', `<a href="#listings" class="btn bo">View Listings</a>`)
+      + (props.filter(p=>p.name).length?`<section id="listings"><div class="wrap"><div class="sl">Properties</div><h2 class="st">Our Listings</h2><div class="g3">${props.filter(p=>p.name).map(p=>`<div class="pcard"><div class="pcb"><div class="ptype">${esc(p.type||'Property')}</div><h3>${esc(p.name)}</h3>${p.price?`<div class="pprice">${esc(p.price)}</div>`:''}${p.beds?`<p class="pmeta">${esc(p.beds)}</p>`:''} ${waNum?`<a href="${wa(waNum)}" class="btn bp" style="margin-top:12px;font-size:12px;padding:8px 16px" target="_blank">Enquire</a>`:''}</div></div>`).join('')}</div></div></section>`:'')
+      + `<section id="about" class="alt"><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">About Us</div><h2 class="st">${esc(agent||d.name)}</h2><p class="ss">${esc(d.about)}</p>${rera?`<p style="font-size:12px;color:var(--muted);margin-top:12px">${esc(rera)}</p>`:''}</div>
+          <div style="background:var(--bg);border-radius:14px;padding:28px"><p style="font-size:1.05rem;line-height:1.9;color:var(--p);font-style:italic">"Your dream home is our mission."</p></div>
+        </div></div></section>`
+      + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Portfolio</div><h2 class="st">Properties</h2><div class="rgal">${galHtml}</div></div></section>`:'')
+      + contactSection(d, waNum?`<div style="margin-top:32px;text-align:center"><a href="${wa(waNum)}" class="btn bp" target="_blank">WhatsApp Enquiry</a></div>`:'')
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+function addProp(){addItem('prop-list',`
+  <div class="field"><label>Property Name</label><input type="text" data-f="name" placeholder="3BHK Villa, Kochi" oninput="livePreview()"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <div class="field"><label>Type</label><input type="text" data-f="type" placeholder="Villa / Flat / Plot" oninput="livePreview()"></div>
+    <div class="field"><label>Price</label><input type="text" data-f="price" placeholder="₹75 Lakhs" oninput="livePreview()"></div>
+  </div>
+  <div class="field"><label>Key Info</label><input type="text" data-f="beds" placeholder="3 BHK · 1800 sq ft · Ready to move" oninput="livePreview()"></div>`);}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DENTAL CLINIC
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.dental = {
+  id:'dental', label:'Dental Clinic', industry:'Healthcare',
+  defaultColors:{primary:'#0a6b8a',accent:'#2eb8d6'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Services</h3><div id="den-list"></div>
+  <button class="add-btn" onclick="addDenSvc()">+ Add Service</button></div>
+<div class="fg"><h3>Patient Testimonials</h3><div id="den-test"></div>
+  <button class="add-btn" onclick="addDenTest()">+ Add Testimonial</button></div>
+<div class="fg"><h3>Clinic Gallery</h3><div class="gg" id="gal-den"></div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Doctor Name(s)</label><input type="text" id="f-doc" placeholder="Dr. Priya Menon, BDS, MDS" oninput="livePreview()"></div>
+  <div class="field"><label>Booking Link or Phone</label><input type="text" id="f-book" placeholder="https://... or +91 98765 43210" oninput="livePreview()"></div>
+  <div class="field"><label>Clinic Hours</label><input type="text" id="f-hours" placeholder="Mon–Sat 9am–7pm" oninput="livePreview()"></div>
+  <div class="field"><label>Emergency Contact</label><input type="text" id="f-emg" placeholder="+91 98765 43210" oninput="livePreview()"></div>
+  <div class="field"><label>Insurance / Accepted Payments</label><input type="text" id="f-ins" placeholder="Cashless, UPI, All major insurances accepted" oninput="livePreview()"></div>
+  <div class="field"><label>Google Maps Embed URL</label><input type="url" id="f-maps" placeholder="https://maps.google.com/..." oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-den',['den1','den2','den3','den4']);
+    addDenSvc(); addDenSvc(); addDenSvc();
+  },
+  build(d,fp) {
+    const svcs=getItems('den-list',['name','desc']);
+    const gkeys=['den1','den2','den3','den4'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const doc=v('f-doc'), book=v('f-book'), hours=v('f-hours'), emg=v('f-emg'), ins=v('f-ins'), maps=v('f-maps');
+    const tests=getItems('den-test',['name','quote']);
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="clinic ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const bookHref=book?(book.startsWith('+')||/^\d/.test(book)?wa(book):safe(book)):(d.phone?wa(d.phone):'');
+    const css = baseCSS(d.primary,d.accent,{bg:'#f0faff',surf:'#e0f4fb'}) + `
+.hero{min-height:85vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(135deg,${d.primary}ee,${d.accent}88)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.15}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2rem,4.5vw,3.5rem);font-weight:800;margin-bottom:14px}
+.hc p{font-size:1.05rem;opacity:.88;max-width:500px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.svc{background:var(--bg);border:1px solid rgba(0,0,0,.07);border-radius:12px;padding:22px;transition:box-shadow .2s}
+.svc:hover{box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.svc h3{color:var(--p);font-size:16px;font-weight:700;margin-bottom:8px}
+.svc p{font-size:13px;color:var(--muted)}
+.dgal2{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.dgal2 img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}
+.emg-bar{background:#dc2626;color:#fff;text-align:center;padding:12px;font-weight:700;font-size:14px}
+.emg-bar a{color:#fff}
+.dtest{background:var(--bg);border-left:4px solid var(--a);padding:20px;border-radius:0 10px 10px 0}
+.dtest p{font-size:14px;color:#333;font-style:italic;margin-bottom:10px}
+.dtest strong{font-size:13px;color:var(--p)}`;
+    const body = (emg?`<div class="emg-bar">🚨 Dental Emergency? Call now: <a href="tel:${emg}">${esc(emg)}</a></div>`:'')
+      + navHtml(logo,d.name,[['#services','Services'],['#about','About'],tests.filter(t=>t.quote).length?['#reviews','Reviews']:null,galHtml?['#gallery','Gallery']:null,['#contact','Contact']].filter(Boolean))
+      + heroSection(d,hero, bookHref?`<a href="${bookHref}" class="btn bp" target="_blank">Book Appointment</a>`:'', `<a href="#services" class="btn bo">Our Services</a>`)
+      + `<section id="about" class="alt"><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">About the Clinic</div><h2 class="st">${esc(d.name)}</h2>
+          ${doc?`<p style="color:var(--a);font-weight:600;margin-bottom:10px">${esc(doc)}</p>`:''}
+          <p class="ss">${esc(d.about)}</p>
+          ${hours?`<p style="font-size:13px;color:var(--muted);margin-top:12px">⏰ ${esc(hours)}</p>`:''}
+          ${ins?`<p style="font-size:13px;color:var(--muted);margin-top:6px">💳 ${esc(ins)}</p>`:''}</div>
+          <div style="background:var(--bg);border-radius:14px;padding:28px"><p style="font-size:1.05rem;line-height:1.9;color:var(--p);font-style:italic">"A healthy smile is a beautiful smile."</p></div>
+        </div></div></section>`
+      + (svcs.filter(s=>s.name).length?`<section id="services"><div class="wrap"><div class="sl">What We Offer</div><h2 class="st">Our Services</h2><div class="g3">${svcs.filter(s=>s.name).map(s=>`<div class="svc"><h3>🦷 ${esc(s.name)}</h3>${s.desc?`<p>${esc(s.desc)}</p>`:''}</div>`).join('')}</div></div></section>`:'')
+      + (tests.filter(t=>t.quote).length?`<section id="reviews" class="alt"><div class="wrap"><div class="sl">Happy Patients</div><h2 class="st">What They Say</h2><div class="g2">${tests.filter(t=>t.quote).map(t=>`<div class="dtest"><p>"${esc(t.quote)}"</p><strong>— ${esc(t.name)}</strong></div>`).join('')}</div></div></section>`:'')
+      + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Our Clinic</div><h2 class="st">Gallery</h2><div class="dgal2">${galHtml}</div></div></section>`:'')
+      + contactSection(d, (bookHref||maps)?`${bookHref?`<div style="margin-top:32px;text-align:center"><a href="${bookHref}" class="btn bp" target="_blank">Book Appointment</a></div>`:''}${maps?`<div style="margin-top:28px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:''}`:'' )
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+function addDenSvc(){addItem('den-list',`
+  <div class="field"><label>Service</label><input type="text" data-f="name" placeholder="Teeth Whitening" oninput="livePreview()"></div>
+  <div class="field"><label>Description</label><input type="text" data-f="desc" placeholder="Professional whitening in just one session..." oninput="livePreview()"></div>`);}
+function addDenTest(){addItem('den-test',`
+  <div class="field"><label>Patient Name</label><input type="text" data-f="name" placeholder="Rahul S." oninput="livePreview()"></div>
+  <div class="field"><label>Review</label><textarea data-f="quote" rows="2" placeholder="Best dental experience I've had. Pain-free and professional!" oninput="livePreview()"></textarea></div>`);}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MEDICAL / GENERAL CLINIC
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.clinic = {
+  id:'clinic', label:'Medical Clinic', industry:'Healthcare',
+  defaultColors:{primary:'#006b6b',accent:'#00b4b4'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Services / Specialities</h3><div id="med-list"></div>
+  <button class="add-btn" onclick="addMedSvc()">+ Add Service</button></div>
+<div class="fg"><h3>Doctors</h3><div id="med-doc"></div>
+  <button class="add-btn" onclick="addMedDoc()">+ Add Doctor</button></div>
+<div class="fg"><h3>Patient Testimonials</h3><div id="med-test"></div>
+  <button class="add-btn" onclick="addMedTest()">+ Add Testimonial</button></div>
+<div class="fg"><h3>Clinic Gallery</h3><div class="gg" id="gal-med"></div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Clinic Hours</label><input type="text" id="f-hours" placeholder="Mon–Sat 9am–8pm, Sun 10am–2pm" oninput="livePreview()"></div>
+  <div class="field"><label>Appointment Booking</label><input type="text" id="f-book" placeholder="https://... or +91 98765 43210" oninput="livePreview()"></div>
+  <div class="field"><label>Emergency No.</label><input type="text" id="f-emg" placeholder="+91 98765 43210" oninput="livePreview()"></div>
+  <div class="field"><label>Insurance / Payments Accepted</label><input type="text" id="f-ins" placeholder="Cashless, UPI, All major insurances" oninput="livePreview()"></div>
+  <div class="field"><label>Google Maps Embed URL</label><input type="url" id="f-maps" placeholder="https://maps.google.com/..." oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-med',['med1','med2','med3','med4']);
+    addMedSvc(); addMedSvc(); addMedSvc();
+    addMedDoc(); addMedDoc();
+    addMedTest();
+  },
+  build(d,fp) {
+    const svcs=getItems('med-list',['name','desc']);
+    const docs=getItems('med-doc',['name','spec']);
+    const tests=getItems('med-test',['name','quote']);
+    const gkeys=['med1','med2','med3','med4'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const hours=v('f-hours'), book=v('f-book'), emg=v('f-emg'), ins=v('f-ins'), maps=v('f-maps');
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="clinic ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const bookHref=book?(book.startsWith('+')||/^\d/.test(book)?wa(book):safe(book)):(d.phone?wa(d.phone):'');
+    const css = baseCSS(d.primary,d.accent,{bg:'#f0fafa',surf:'#e0f5f5'}) + `
+.hero{min-height:85vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(135deg,${d.primary}ee,${d.accent}88)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.15}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2rem,4.5vw,3.5rem);font-weight:800;margin-bottom:14px}
+.hc p{font-size:1.05rem;opacity:.88;max-width:500px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.msvc{background:var(--bg);border:1px solid rgba(0,0,0,.07);border-radius:12px;padding:22px;transition:box-shadow .2s}
+.msvc:hover{box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.msvc h3{color:var(--p);font-size:16px;font-weight:700;margin-bottom:8px}
+.msvc p{font-size:13px;color:var(--muted)}
+.dcard{background:var(--bg);border-radius:12px;padding:22px;text-align:center;border:1px solid rgba(0,0,0,.07)}
+.dcard h3{font-size:16px;font-weight:700;margin-bottom:4px}
+.dcard p{font-size:13px;color:var(--a);font-weight:600}
+.mtest{background:var(--bg);border-left:4px solid var(--a);padding:20px;border-radius:0 10px 10px 0}
+.mtest p{font-size:14px;color:#333;font-style:italic;margin-bottom:10px}
+.mtest strong{font-size:13px;color:var(--p)}
+.emg-bar{background:#dc2626;color:#fff;text-align:center;padding:12px;font-weight:700;font-size:14px}
+.emg-bar a{color:#fff}
+.mgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.mgal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}`;
+    const body = (emg?`<div class="emg-bar">🚨 24/7 Emergency: <a href="tel:${emg}">${esc(emg)}</a></div>`:'')
+      + navHtml(logo,d.name,[['#services','Services'],docs.filter(x=>x.name).length?['#doctors','Doctors']:null,tests.filter(x=>x.quote).length?['#reviews','Reviews']:null,['#contact','Contact']].filter(Boolean))
+      + heroSection(d,hero, bookHref?`<a href="${bookHref}" class="btn bp" target="_blank">Book Appointment</a>`:'', `<a href="#services" class="btn bo">Our Services</a>`)
+      + `<section id="about" class="alt"><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">About</div><h2 class="st">${esc(d.name)}</h2><p class="ss">${esc(d.about)}</p>
+          ${hours?`<p style="font-size:13px;color:var(--muted);margin-top:10px">⏰ ${esc(hours)}</p>`:''}
+          ${ins?`<p style="font-size:13px;color:var(--muted);margin-top:6px">💳 ${esc(ins)}</p>`:''}</div>
+          <div class="cg">
+            ${emg?`<div class="ci"><div class="cion">🚨</div><div><h4>Emergency</h4><p>${esc(emg)}</p></div></div>`:''}
+            ${d.phone?`<div class="ci"><div class="cion">📞</div><div><h4>Appointments</h4><p>${esc(d.phone)}</p></div></div>`:''}
+          </div></div></div></section>`
+      + (svcs.filter(s=>s.name).length?`<section id="services"><div class="wrap"><div class="sl">What We Offer</div><h2 class="st">Services</h2><div class="g3">${svcs.filter(s=>s.name).map(s=>`<div class="msvc"><h3>🩺 ${esc(s.name)}</h3>${s.desc?`<p>${esc(s.desc)}</p>`:''}</div>`).join('')}</div></div></section>`:'')
+      + (docs.filter(x=>x.name).length?`<section id="doctors" class="alt"><div class="wrap"><div class="sl">Our Team</div><h2 class="st">Our Doctors</h2><div class="g3">${docs.filter(x=>x.name).map(x=>`<div class="dcard"><h3>${esc(x.name)}</h3><p>${esc(x.spec||'General Physician')}</p></div>`).join('')}</div></div></section>`:'')
+      + (tests.filter(x=>x.quote).length?`<section id="reviews"><div class="wrap"><div class="sl">Patient Stories</div><h2 class="st">What They Say</h2><div class="g2">${tests.filter(x=>x.quote).map(x=>`<div class="mtest"><p>"${esc(x.quote)}"</p><strong>— ${esc(x.name)}</strong></div>`).join('')}</div></div></section>`:'')
+      + (galHtml?`<section class="alt"><div class="wrap"><div class="sl">Our Facility</div><h2 class="st">Gallery</h2><div class="mgal">${galHtml}</div></div></section>`:'')
+      + contactSection(d, `${bookHref?`<div style="margin-top:28px;text-align:center"><a href="${bookHref}" class="btn bp" target="_blank">Book Appointment</a></div>`:''}${maps?`<div style="margin-top:28px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:''}`)
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+function addMedSvc(){addItem('med-list',`
+  <div class="field"><label>Service</label><input type="text" data-f="name" placeholder="General Consultation" oninput="livePreview()"></div>
+  <div class="field"><label>Description</label><input type="text" data-f="desc" placeholder="Comprehensive health checkup and diagnosis..." oninput="livePreview()"></div>`);}
+function addMedDoc(){addItem('med-doc',`
+  <div class="field"><label>Doctor Name</label><input type="text" data-f="name" placeholder="Dr. Anita Sharma, MBBS, MD" oninput="livePreview()"></div>
+  <div class="field"><label>Speciality</label><input type="text" data-f="spec" placeholder="General Physician" oninput="livePreview()"></div>`);}
+function addMedTest(){addItem('med-test',`
+  <div class="field"><label>Patient Name</label><input type="text" data-f="name" placeholder="Suresh M." oninput="livePreview()"></div>
+  <div class="field"><label>Review</label><textarea data-f="quote" rows="2" placeholder="Very caring doctors and clean facility..." oninput="livePreview()"></textarea></div>`);}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HOTEL & HOSPITALITY
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.hotel = {
+  id:'hotel', label:'Hotel & Hospitality', industry:'Hospitality',
+  defaultColors:{primary:'#1a0a3e',accent:'#c9a84c'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Room Types</h3><div id="room-list"></div>
+  <button class="add-btn" onclick="addRoom()">+ Add Room</button></div>
+<div class="fg"><h3>Amenities <small style="color:#475569;font-weight:400">(comma-separated)</small></h3>
+  <div class="field"><input type="text" id="f-amen" placeholder="Pool, Spa, Restaurant, Free WiFi, Gym, Airport Transfer" oninput="livePreview()"></div></div>
+<div class="fg"><h3>Guest Reviews</h3><div id="hotel-test"></div>
+  <button class="add-btn" onclick="addHotelTest()">+ Add Review</button></div>
+<div class="fg"><h3>Hotel Gallery</h3><div class="gg" id="gal-hot"></div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Star Rating</label><input type="text" id="f-stars" placeholder="4-Star Luxury Hotel" oninput="livePreview()"></div>
+  <div class="field"><label>Check-in / Check-out</label><input type="text" id="f-ci" placeholder="Check-in: 2:00 PM · Check-out: 11:00 AM" oninput="livePreview()"></div>
+  <div class="field"><label>Booking Link</label><input type="url" id="f-book" placeholder="https://..." oninput="livePreview()"></div>
+  <div class="field"><label>Google Maps Embed URL</label><input type="url" id="f-maps" placeholder="https://maps.google.com/..." oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-hot',['hot1','hot2','hot3','hot4','hot5','hot6']);
+    addRoom(); addRoom();
+    addHotelTest();
+  },
+  build(d,fp) {
+    const rooms=getItems('room-list',['name','price','desc','beds']);
+    const tests=getItems('hotel-test',['name','quote','sub']);
+    const gkeys=['hot1','hot2','hot3','hot4','hot5','hot6'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const amen=v('f-amen'), stars=v('f-stars'), ci=v('f-ci'), book=v('f-book'), maps=v('f-maps');
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="hotel ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const css = baseCSS(d.primary,d.accent,{bg:'#fdfbf6',surf:'#f5f0e8'}) + `
+.hero{min-height:92vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(160deg,${d.primary},#2d1a5e)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.28}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;margin-bottom:14px}
+.hc p{font-size:1.1rem;opacity:.88;max-width:540px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.stars{color:var(--a);font-size:1.1rem;margin-bottom:10px}
+.rcard{background:var(--bg);border:1px solid rgba(0,0,0,.08);border-radius:14px;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.rcard:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.1)}
+.rcb{padding:20px}
+.rcard h3{font-size:17px;font-weight:700;margin-bottom:6px}
+.rprice{font-size:1.3rem;font-weight:800;color:var(--a);margin:8px 0}
+.rcard p{font-size:13px;color:var(--muted)}
+.rmeta{font-size:12px;color:var(--muted);margin-bottom:8px}
+.amen-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.amen-tag{background:rgba(0,0,0,.06);color:var(--p);padding:7px 16px;border-radius:20px;font-size:13px;font-weight:500}
+.hrev{background:var(--bg);border-radius:14px;padding:24px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.hrev-q{font-size:14px;color:#333;font-style:italic;line-height:1.8;margin-bottom:12px}
+.hrev-name{font-weight:700;font-size:13px}
+.hrev-sub{font-size:12px;color:var(--muted)}
+.hgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.hgal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}
+.ci-bar{background:var(--p);color:#fff;padding:18px 0;text-align:center;font-size:14px;font-weight:500}
+.ci-bar span{margin:0 24px;opacity:.85}`;
+    const body = (ci?`<div class="ci-bar"><span>📅 ${esc(ci)}</span></div>`:'')
+      + navHtml(logo,d.name,[['#rooms','Rooms'],amen?['#amenities','Amenities']:null,tests.filter(x=>x.quote).length?['#reviews','Reviews']:null,galHtml?['#gallery','Gallery']:null,['#contact','Contact']].filter(Boolean))
+      + `<section class="hero">${hero?`<img class="hbg" src="${hero}" alt="">`:''}
+          <div class="wrap"><div class="hc">
+            ${stars?`<div class="stars">${'★'.repeat(parseInt(stars)||4)}</div>`:''}
+            <h1>${esc(d.name)}</h1>
+            ${d.tagline?`<p>${esc(d.tagline)}</p>`:''}
+            <div class="hbtns">
+              ${book?`<a href="${safe(book)}" class="btn bp" target="_blank">Book Now</a>`:(d.phone?`<a href="${wa(d.phone)}" class="btn bp" target="_blank">Reserve via WhatsApp</a>`:'')}
+              <a href="#rooms" class="btn bo">View Rooms</a>
+            </div>
+          </div></div></section>`
+      + `<section id="about" class="alt"><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">Welcome</div><h2 class="st">${esc(d.name)}</h2>
+          ${stars?`<p style="color:var(--a);font-weight:600;margin-bottom:10px">${esc(stars)}</p>`:''}
+          <p class="ss">${esc(d.about)}</p></div>
+          <div style="background:var(--bg);border-radius:14px;padding:28px">
+            <p style="font-size:1.05rem;line-height:1.9;color:var(--p);font-style:italic">"Experience luxury. Feel at home."</p>
+          </div></div></div></section>`
+      + (rooms.filter(r=>r.name).length?`<section id="rooms"><div class="wrap"><div class="sl">Accommodation</div><h2 class="st">Our Rooms</h2><div class="g3">${rooms.filter(r=>r.name).map(r=>`<div class="rcard"><div class="rcb"><h3>${esc(r.name)}</h3>${r.beds?`<p class="rmeta">🛏 ${esc(r.beds)}</p>`:''}${r.price?`<div class="rprice">${esc(r.price)}<span style="font-size:13px;font-weight:400;color:var(--muted)"> / night</span></div>`:''}${r.desc?`<p>${esc(r.desc)}</p>`:''} ${book?`<a href="${safe(book)}" class="btn bp" style="margin-top:14px;font-size:12px;padding:8px 18px" target="_blank">Book</a>`:''}</div></div>`).join('')}</div></div></section>`:'')
+      + (amen?`<section id="amenities" class="alt"><div class="wrap"><div class="sl">Facilities</div><h2 class="st">Amenities</h2><div class="amen-grid">${amen.split(',').map(a=>`<span class="amen-tag">✓ ${esc(a.trim())}</span>`).join('')}</div></div></section>`:'')
+      + (tests.filter(x=>x.quote).length?`<section id="reviews"><div class="wrap"><div class="sl">Guest Stories</div><h2 class="st">What Our Guests Say</h2><div class="g3">${tests.filter(x=>x.quote).map(x=>`<div class="hrev"><p class="hrev-q">"${esc(x.quote)}"</p><div class="hrev-name">${esc(x.name)}</div>${x.sub?`<div class="hrev-sub">${esc(x.sub)}</div>`:''}</div>`).join('')}</div></div></section>`:'')
+      + (galHtml?`<section id="gallery" class="alt"><div class="wrap"><div class="sl">Our Property</div><h2 class="st">Gallery</h2><div class="hgal">${galHtml}</div></div></section>`:'')
+      + contactSection(d, `${book?`<div style="margin-top:28px;text-align:center"><a href="${safe(book)}" class="btn bp" target="_blank">Book a Room</a></div>`:''}${maps?`<div style="margin-top:28px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:''}`)
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+function addRoom(){addItem('room-list',`
+  <div class="field"><label>Room Type</label><input type="text" data-f="name" placeholder="Deluxe Sea View Suite" oninput="livePreview()"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <div class="field"><label>Price / Night</label><input type="text" data-f="price" placeholder="₹4,500" oninput="livePreview()"></div>
+    <div class="field"><label>Bed Info</label><input type="text" data-f="beds" placeholder="1 King Bed · Sleeps 2" oninput="livePreview()"></div>
+  </div>
+  <div class="field"><label>Description</label><input type="text" data-f="desc" placeholder="AC, balcony, mini bar, sea view..." oninput="livePreview()"></div>`);}
+function addHotelTest(){addItem('hotel-test',`
+  <div class="field"><label>Guest Name</label><input type="text" data-f="name" placeholder="Priya & Rahul" oninput="livePreview()"></div>
+  <div class="field"><label>Review</label><textarea data-f="quote" rows="2" placeholder="Absolutely stunning property. The staff went above and beyond..." oninput="livePreview()"></textarea></div>
+  <div class="field"><label>Location / Source</label><input type="text" data-f="sub" placeholder="Mumbai · via Google" oninput="livePreview()"></div>`);}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// WEDDING & EVENTS
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.wedding = {
+  id:'wedding', label:'Wedding & Events', industry:'Events',
+  defaultColors:{primary:'#6b2d5e',accent:'#d4a5b5'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Packages</h3><div id="wed-pkg"></div>
+  <button class="add-btn" onclick="addWedPkg()">+ Add Package</button></div>
+<div class="fg"><h3>Services Offered <small style="color:#475569;font-weight:400">(comma-separated)</small></h3>
+  <div class="field"><input type="text" id="f-svcs" placeholder="Decoration, Catering, Photography, Venue, Mehendi, Music" oninput="livePreview()"></div></div>
+<div class="fg"><h3>Client Testimonials</h3><div id="wed-test"></div>
+  <button class="add-btn" onclick="addWedTest()">+ Add Testimonial</button></div>
+<div class="fg"><h3>Gallery</h3><div class="gg" id="gal-wed"></div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Years of Experience</label><input type="text" id="f-yrs" placeholder="12+ Years" oninput="livePreview()"></div>
+  <div class="field"><label>Events Completed</label><input type="text" id="f-events" placeholder="500+ Weddings" oninput="livePreview()"></div>
+  <div class="field"><label>Enquiry / WhatsApp</label><input type="text" id="f-wa" placeholder="+91 98765 43210" oninput="livePreview()"></div>
+  <div class="field"><label>Instagram Handle</label><input type="text" id="f-insta" placeholder="@yourhandle" oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-wed',['wed1','wed2','wed3','wed4','wed5','wed6']);
+    addWedPkg(); addWedPkg();
+    addWedTest(); addWedTest();
+  },
+  build(d,fp) {
+    const pkgs=getItems('wed-pkg',['name','price','inc']);
+    const tests=getItems('wed-test',['name','quote','sub']);
+    const gkeys=['wed1','wed2','wed3','wed4','wed5','wed6'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const svcs=v('f-svcs'), yrs=v('f-yrs'), events=v('f-events'), waNum=v('f-wa')||d.phone, insta=v('f-insta');
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="event ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const css = baseCSS(d.primary,d.accent,{bg:'#fdf8fc',surf:'#f5edf2'}) + `
+.hero{min-height:92vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(160deg,${d.primary}ee,#3d1435)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.22}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0;text-align:center}
+.hc h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;margin-bottom:14px;font-style:italic}
+.hc p{font-size:1.1rem;opacity:.88;max-width:540px;margin:0 auto 28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.stat-bar{display:flex;justify-content:center;gap:60px;flex-wrap:wrap;padding:32px 0;background:var(--surf)}
+.stat{text-align:center}.stat-n{font-size:2rem;font-weight:800;color:var(--p)}.stat-l{font-size:12px;color:var(--muted);margin-top:2px}
+.svc-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.svc-tag{background:rgba(107,45,94,.08);color:var(--p);padding:7px 16px;border-radius:20px;font-size:13px;font-weight:600}
+.wpkg{background:var(--bg);border:2px solid rgba(0,0,0,.07);border-radius:16px;padding:28px;text-align:center;transition:border-color .2s,box-shadow .2s}
+.wpkg:hover{border-color:var(--p);box-shadow:0 8px 24px rgba(107,45,94,.12)}
+.wpkg h3{font-size:18px;font-weight:700;color:var(--p);margin-bottom:10px}
+.wpkg-price{font-size:1.8rem;font-weight:800;color:var(--a);margin:12px 0}
+.wpkg-inc{font-size:13px;color:var(--muted);line-height:1.9}
+.wtest{background:var(--bg);border-radius:14px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.07);text-align:center}
+.wtest-q{font-size:14px;font-style:italic;color:#444;line-height:1.8;margin-bottom:12px}
+.wtest-name{font-weight:700;font-size:13px;color:var(--p)}
+.wtest-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.wgal2{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.wgal2 img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}`;
+    const body = navHtml(logo,d.name,[pkgs.filter(p=>p.name).length?['#packages','Packages']:null,svcs?['#services','Services']:null,tests.filter(t=>t.quote).length?['#reviews','Reviews']:null,galHtml?['#gallery','Gallery']:null,['#contact','Contact']].filter(Boolean))
+      + `<section class="hero">${hero?`<img class="hbg" src="${hero}" alt="">`:''}
+          <div class="wrap"><div class="hc">
+            <h1>${esc(d.name)}</h1>
+            ${d.tagline?`<p>${esc(d.tagline)}</p>`:''}
+            <div class="hbtns">
+              ${waNum?`<a href="${wa(waNum)}" class="btn bp" target="_blank">Get Free Quote</a>`:''}
+              ${galHtml?`<a href="#gallery" class="btn bo">View Our Work</a>`:''}
+            </div>
+          </div></div></section>`
+      + ((yrs||events)?`<div class="stat-bar">
+          ${yrs?`<div class="stat"><div class="stat-n">${esc(yrs)}</div><div class="stat-l">Experience</div></div>`:''}
+          ${events?`<div class="stat"><div class="stat-n">${esc(events)}</div><div class="stat-l">Events Done</div></div>`:''}
+          <div class="stat"><div class="stat-n">100%</div><div class="stat-l">Happy Clients</div></div>
+        </div>`:'')
+      + `<section id="about" class="alt"><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">About Us</div><h2 class="st">${esc(d.name)}</h2><p class="ss">${esc(d.about)}</p>
+          ${insta?`<p style="margin-top:16px"><a href="https://instagram.com/${insta.replace('@','')}" target="_blank" style="color:var(--a);font-weight:600">${esc(insta)} on Instagram</a></p>`:''}
+          </div>
+          <div style="background:var(--bg);border-radius:14px;padding:28px"><p style="font-size:1.1rem;line-height:1.9;color:var(--p);font-style:italic">"Every love story deserves a perfect celebration."</p></div>
+        </div></div></section>`
+      + (pkgs.filter(p=>p.name).length?`<section id="packages"><div class="wrap"><div class="sl">Choose Your Plan</div><h2 class="st">Packages</h2><div class="g3">${pkgs.filter(p=>p.name).map(p=>`<div class="wpkg"><h3>${esc(p.name)}</h3>${p.price?`<div class="wpkg-price">${esc(p.price)}</div>`:''}${p.inc?`<p class="wpkg-inc">${esc(p.inc).split(',').map(i=>`✓ ${i.trim()}`).join('<br>')}</p>`:''} ${waNum?`<a href="${wa(waNum)}" class="btn bp" style="margin-top:18px;width:100%;justify-content:center" target="_blank">Enquire</a>`:''}</div>`).join('')}</div></div></section>`:'')
+      + (svcs?`<section id="services" class="alt"><div class="wrap"><div class="sl">What We Do</div><h2 class="st">Services</h2><div class="svc-tags">${svcs.split(',').map(s=>`<span class="svc-tag">✨ ${esc(s.trim())}</span>`).join('')}</div></div></section>`:'')
+      + (tests.filter(t=>t.quote).length?`<section id="reviews"><div class="wrap"><div class="sl">Love Stories</div><h2 class="st">What Couples Say</h2><div class="g3">${tests.filter(t=>t.quote).map(t=>`<div class="wtest"><p class="wtest-q">"${esc(t.quote)}"</p><div class="wtest-name">— ${esc(t.name)}</div>${t.sub?`<div class="wtest-sub">${esc(t.sub)}</div>`:''}</div>`).join('')}</div></div></section>`:'')
+      + (galHtml?`<section id="gallery" class="alt"><div class="wrap"><div class="sl">Our Work</div><h2 class="st">Gallery</h2><div class="wgal2">${galHtml}</div></div></section>`:'')
+      + contactSection(d, waNum?`<div style="margin-top:28px;text-align:center"><a href="${wa(waNum)}" class="btn bp" target="_blank">Get Free Quote on WhatsApp</a></div>`:'')
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+function addWedPkg(){addItem('wed-pkg',`
+  <div class="field"><label>Package Name</label><input type="text" data-f="name" placeholder="Royal Wedding Package" oninput="livePreview()"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <div class="field"><label>Price</label><input type="text" data-f="price" placeholder="₹2,50,000" oninput="livePreview()"></div>
+  </div>
+  <div class="field"><label>Includes (comma-separated)</label><input type="text" data-f="inc" placeholder="Decoration, Catering 200 pax, Photography, DJ" oninput="livePreview()"></div>`);}
+function addWedTest(){addItem('wed-test',`
+  <div class="field"><label>Couple Name</label><input type="text" data-f="name" placeholder="Ananya & Vikram" oninput="livePreview()"></div>
+  <div class="field"><label>Review</label><textarea data-f="quote" rows="2" placeholder="They made our dream wedding a reality. Everything was perfect!" oninput="livePreview()"></textarea></div>
+  <div class="field"><label>Wedding Date / City</label><input type="text" data-f="sub" placeholder="March 2025 · Kochi" oninput="livePreview()"></div>`);}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// BEAUTY & HAIR SALON
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.salon = {
+  id:'salon', label:'Beauty & Hair Salon', industry:'Beauty & Wellness',
+  defaultColors:{primary:'#8b1a4a',accent:'#f4a0b5'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Services & Pricing</h3><div id="sal-list"></div>
+  <button class="add-btn" onclick="addSalSvc()">+ Add Service</button></div>
+<div class="fg"><h3>Client Reviews</h3><div id="sal-test"></div>
+  <button class="add-btn" onclick="addSalTest()">+ Add Review</button></div>
+<div class="fg"><h3>Salon Gallery</h3><div class="gg" id="gal-sal"></div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Salon Hours</label><input type="text" id="f-hours" placeholder="Mon–Sat 9am–8pm, Sun 10am–6pm" oninput="livePreview()"></div>
+  <div class="field"><label>Booking Link or WhatsApp</label><input type="text" id="f-book" placeholder="https://... or +91 98765 43210" oninput="livePreview()"></div>
+  <div class="field"><label>Speciality / USP</label><input type="text" id="f-usp" placeholder="Bridal makeup · Keratin · Hair spa" oninput="livePreview()"></div>
+  <div class="field"><label>Instagram Handle</label><input type="text" id="f-insta" placeholder="@yoursalon" oninput="livePreview()"></div>
+  <div class="field"><label>Google Maps Embed URL</label><input type="url" id="f-maps" placeholder="https://maps.google.com/..." oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-sal',['sal1','sal2','sal3','sal4','sal5','sal6']);
+    addSalSvc(); addSalSvc(); addSalSvc();
+    addSalTest(); addSalTest();
+  },
+  build(d,fp) {
+    const svcs=getItems('sal-list',['name','price','desc']);
+    const tests=getItems('sal-test',['name','quote']);
+    const gkeys=['sal1','sal2','sal3','sal4','sal5','sal6'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const hours=v('f-hours'), book=v('f-book'), usp=v('f-usp'), insta=v('f-insta'), maps=v('f-maps');
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="salon ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const bookHref=book?(book.startsWith('+')||/^\d/.test(book)?wa(book):safe(book)):(d.phone?wa(d.phone):'');
+    const css = baseCSS(d.primary,d.accent,{bg:'#fff8fb',surf:'#fdeef4'}) + `
+.hero{min-height:88vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(150deg,${d.primary}ee,#c2185b88)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.2}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2rem,4.5vw,3.6rem);font-weight:800;margin-bottom:14px;font-style:italic}
+.hc p{font-size:1.05rem;opacity:.88;max-width:500px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.ssvc{background:var(--bg);border:1px solid rgba(0,0,0,.07);border-radius:14px;padding:22px;transition:box-shadow .2s}
+.ssvc:hover{box-shadow:0 6px 20px rgba(139,26,74,.1)}
+.ssvc h3{color:var(--p);font-size:16px;font-weight:700;margin-bottom:6px}
+.ssvc-price{font-size:1.1rem;font-weight:800;color:var(--a);margin-bottom:8px}
+.ssvc p{font-size:13px;color:var(--muted)}
+.srev{background:var(--bg);border-radius:12px;padding:22px;border-left:4px solid var(--a)}
+.srev p{font-size:14px;font-style:italic;color:#444;line-height:1.8;margin-bottom:10px}
+.srev strong{font-size:13px;color:var(--p)}
+.sgal2{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.sgal2 img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px}`;
+    const body = navHtml(logo,d.name,[['#services','Services'],tests.filter(t=>t.quote).length?['#reviews','Reviews']:null,galHtml?['#gallery','Gallery']:null,['#contact','Book Now']].filter(Boolean))
+      + heroSection(d,hero, bookHref?`<a href="${bookHref}" class="btn bp" target="_blank">Book Appointment</a>`:'', d.phone?`<a href="${wa(d.phone)}" class="btn bo" target="_blank">WhatsApp Us</a>`:'')
+      + `<section id="about" class="alt"><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">About the Salon</div><h2 class="st">${esc(d.name)}</h2>
+          ${usp?`<p style="color:var(--a);font-weight:600;margin-bottom:10px">${esc(usp)}</p>`:''}
+          <p class="ss">${esc(d.about)}</p>
+          ${hours?`<p style="font-size:13px;color:var(--muted);margin-top:10px">⏰ ${esc(hours)}</p>`:''}
+          ${insta?`<p style="margin-top:10px"><a href="https://instagram.com/${insta.replace('@','')}" target="_blank" style="color:var(--a);font-weight:600">${esc(insta)}</a></p>`:''}
+          </div>
+          <div style="background:var(--bg);border-radius:14px;padding:28px">
+            <p style="font-size:1.05rem;line-height:1.9;color:var(--p);font-style:italic">"Look good. Feel confident. Glow every day."</p>
+          </div></div></div></section>`
+      + (svcs.filter(s=>s.name).length?`<section id="services"><div class="wrap"><div class="sl">What We Offer</div><h2 class="st">Services & Pricing</h2><div class="g3">${svcs.filter(s=>s.name).map(s=>`<div class="ssvc"><h3>💅 ${esc(s.name)}</h3>${s.price?`<div class="ssvc-price">${esc(s.price)}</div>`:''}${s.desc?`<p>${esc(s.desc)}</p>`:''}</div>`).join('')}</div></div></section>`:'')
+      + (tests.filter(t=>t.quote).length?`<section id="reviews" class="alt"><div class="wrap"><div class="sl">Happy Clients</div><h2 class="st">What They Say</h2><div class="g2">${tests.filter(t=>t.quote).map(t=>`<div class="srev"><p>"${esc(t.quote)}"</p><strong>— ${esc(t.name)}</strong></div>`).join('')}</div></div></section>`:'')
+      + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Our Work</div><h2 class="st">Gallery</h2><div class="sgal2">${galHtml}</div></div></section>`:'')
+      + contactSection(d, `${bookHref?`<div style="margin-top:28px;text-align:center"><a href="${bookHref}" class="btn bp" target="_blank">Book an Appointment</a></div>`:''}${maps?`<div style="margin-top:28px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:''}`)
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+function addSalSvc(){addItem('sal-list',`
+  <div class="field"><label>Service Name</label><input type="text" data-f="name" placeholder="Bridal Makeup" oninput="livePreview()"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <div class="field"><label>Price</label><input type="text" data-f="price" placeholder="₹3,500 onwards" oninput="livePreview()"></div>
+  </div>
+  <div class="field"><label>Description</label><input type="text" data-f="desc" placeholder="Full bridal look with trial session included..." oninput="livePreview()"></div>`);}
+function addSalTest(){addItem('sal-test',`
+  <div class="field"><label>Client Name</label><input type="text" data-f="name" placeholder="Meera R." oninput="livePreview()"></div>
+  <div class="field"><label>Review</label><textarea data-f="quote" rows="2" placeholder="Best salon in town! My hair has never looked better..." oninput="livePreview()"></textarea></div>`);}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// JEWELLERY & ACCESSORIES
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.jewellery = {
+  id:'jewellery', label:'Jewellery & Accessories', industry:'Retail',
+  defaultColors:{primary:'#2a1a0a',accent:'#c9a84c'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Collections</h3><div id="jew-list"></div>
+  <button class="add-btn" onclick="addJewCol()">+ Add Collection</button></div>
+<div class="fg"><h3>Showcase Gallery</h3><div class="gg" id="gal-jew"></div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Speciality / Materials</label><input type="text" id="f-usp" placeholder="22K Gold · Diamond · Silver · Handcrafted" oninput="livePreview()"></div>
+  <div class="field"><label>Store Hours</label><input type="text" id="f-hours" placeholder="Mon–Sat 10am–8pm" oninput="livePreview()"></div>
+  <div class="field"><label>WhatsApp / Order Enquiry</label><input type="text" id="f-wa" placeholder="+91 98765 43210" oninput="livePreview()"></div>
+  <div class="field"><label>Instagram Handle</label><input type="text" id="f-insta" placeholder="@yourjewels" oninput="livePreview()"></div>
+  <div class="field"><label>Custom Orders?</label><input type="text" id="f-custom" placeholder="Yes, we accept custom designs" oninput="livePreview()"></div>
+  <div class="field"><label>Google Maps Embed URL</label><input type="url" id="f-maps" placeholder="https://maps.google.com/..." oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-jew',['jew1','jew2','jew3','jew4','jew5','jew6']);
+    addJewCol(); addJewCol(); addJewCol();
+  },
+  build(d,fp) {
+    const cols=getItems('jew-list',['name','desc']);
+    const gkeys=['jew1','jew2','jew3','jew4','jew5','jew6'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const usp=v('f-usp'), hours=v('f-hours'), waNum=v('f-wa')||d.phone, insta=v('f-insta'), custom=v('f-custom'), maps=v('f-maps');
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="jewellery ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const css = baseCSS(d.primary,d.accent,{bg:'#fdfbf5',surf:'#f5f0e0'}) + `
+.hero{min-height:88vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(150deg,${d.primary},#4a2e10)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.25}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2rem,4.5vw,3.6rem);font-weight:800;margin-bottom:14px;font-style:italic}
+.hc p{font-size:1.05rem;opacity:.88;max-width:500px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.usp-strip{background:var(--a);color:var(--p);text-align:center;padding:12px;font-size:13px;font-weight:700;letter-spacing:.5px}
+.jcol{background:var(--bg);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:24px;transition:box-shadow .2s,border-color .2s}
+.jcol:hover{box-shadow:0 6px 24px rgba(201,168,76,.15);border-color:var(--a)}
+.jcol h3{color:var(--p);font-size:17px;font-weight:700;margin-bottom:8px}
+.jcol p{font-size:13px;color:var(--muted);line-height:1.7}
+.jgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.jgal img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;transition:transform .2s}
+.jgal img:hover{transform:scale(1.03)}
+.custom-box{background:linear-gradient(135deg,${d.primary},#4a2e10);color:#fff;border-radius:16px;padding:36px;text-align:center;margin-top:32px}
+.custom-box h3{font-size:1.4rem;font-weight:800;margin-bottom:10px;color:var(--a)}
+.custom-box p{opacity:.85;margin-bottom:20px;font-size:14px}`;
+    const body = (usp?`<div class="usp-strip">✦ ${esc(usp).split('·').join(' ✦ ')} ✦</div>`:'')
+      + navHtml(logo,d.name,[cols.filter(c=>c.name).length?['#collections','Collections']:null,galHtml?['#gallery','Gallery']:null,['#contact','Visit Us']].filter(Boolean))
+      + heroSection(d,hero, waNum?`<a href="${wa(waNum)}" class="btn bp" target="_blank">Enquire on WhatsApp</a>`:'', `<a href="#collections" class="btn bo">View Collections</a>`)
+      + `<section id="about" class="alt"><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">Our Story</div><h2 class="st">${esc(d.name)}</h2><p class="ss">${esc(d.about)}</p>
+          ${hours?`<p style="font-size:13px;color:var(--muted);margin-top:10px">⏰ ${esc(hours)}</p>`:''}
+          ${insta?`<p style="margin-top:10px"><a href="https://instagram.com/${insta.replace('@','')}" target="_blank" style="color:var(--a);font-weight:600">${esc(insta)} on Instagram</a></p>`:''}
+          </div>
+          <div style="background:var(--bg);border-radius:14px;padding:28px;border:1px solid rgba(201,168,76,.2)">
+            <p style="font-size:1.05rem;line-height:1.9;color:var(--p);font-style:italic">"Crafted with love. Worn with pride."</p>
+          </div></div></div></section>`
+      + (cols.filter(c=>c.name).length?`<section id="collections"><div class="wrap"><div class="sl">Explore</div><h2 class="st">Our Collections</h2><div class="g3">${cols.filter(c=>c.name).map(c=>`<div class="jcol"><h3>💍 ${esc(c.name)}</h3>${c.desc?`<p>${esc(c.desc)}</p>`:''}</div>`).join('')}</div>${custom?`<div class="custom-box"><h3>Custom Orders Welcome</h3><p>${esc(custom)}</p>${waNum?`<a href="${wa(waNum)}" class="btn" style="background:var(--a);color:var(--p);font-weight:700" target="_blank">Discuss Your Design</a>`:''}</div>`:''}</div></section>`:'')
+      + (galHtml?`<section id="gallery" class="alt"><div class="wrap"><div class="sl">Our Pieces</div><h2 class="st">Showcase</h2><div class="jgal">${galHtml}</div></div></section>`:'')
+      + contactSection(d, `${waNum?`<div style="margin-top:28px;text-align:center"><a href="${wa(waNum)}" class="btn bp" target="_blank">WhatsApp Enquiry</a></div>`:''}${maps?`<div style="margin-top:28px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:''}`)
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+function addJewCol(){addItem('jew-list',`
+  <div class="field"><label>Collection Name</label><input type="text" data-f="name" placeholder="Bridal Gold Collection" oninput="livePreview()"></div>
+  <div class="field"><label>Description</label><input type="text" data-f="desc" placeholder="Handcrafted 22K gold sets for the modern bride..." oninput="livePreview()"></div>`);}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IT SERVICES / TECH STARTUP
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.itservices = {
+  id:'itservices', label:'IT Services / Startup', industry:'Technology',
+  defaultColors:{primary:'#0f1b3e',accent:'#3b82f6'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Services</h3><div id="it-list"></div>
+  <button class="add-btn" onclick="addItSvc()">+ Add Service</button></div>
+<div class="fg"><h3>Why Choose Us <small style="color:#475569;font-weight:400">(comma-separated)</small></h3>
+  <div class="field"><input type="text" id="f-why" placeholder="5+ Years Experience, 200+ Projects, 24/7 Support, Agile Team" oninput="livePreview()"></div></div>
+<div class="fg"><h3>Tech Stack <small style="color:#475569;font-weight:400">(comma-separated)</small></h3>
+  <div class="field"><input type="text" id="f-tech" placeholder="React, Node.js, Python, AWS, Flutter, PostgreSQL" oninput="livePreview()"></div></div>
+<div class="fg"><h3>Client Testimonials</h3><div id="it-test"></div>
+  <button class="add-btn" onclick="addItTest()">+ Add Testimonial</button></div>
+<div class="fg"><h3>Stats</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <div class="field"><label>Projects Done</label><input type="text" id="f-proj" placeholder="200+" oninput="livePreview()"></div>
+    <div class="field"><label>Clients</label><input type="text" id="f-clients" placeholder="80+" oninput="livePreview()"></div>
+    <div class="field"><label>Years Experience</label><input type="text" id="f-yrs" placeholder="5+" oninput="livePreview()"></div>
+    <div class="field"><label>Team Size</label><input type="text" id="f-team" placeholder="25+" oninput="livePreview()"></div>
+  </div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Demo / Contact Link</label><input type="text" id="f-demo" placeholder="https://... or +91 98765 43210" oninput="livePreview()"></div>
+  <div class="field"><label>LinkedIn / GitHub URL</label><input type="url" id="f-linkedin" placeholder="https://linkedin.com/company/..." oninput="livePreview()"></div>
+</div>`;
+    addItSvc(); addItSvc(); addItSvc();
+    addItTest();
+  },
+  build(d,fp) {
+    const svcs=getItems('it-list',['name','desc','icon']);
+    const tests=getItems('it-test',['name','quote','sub']);
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const why=v('f-why'), tech=v('f-tech'), proj=v('f-proj'), clients=v('f-clients'), yrs=v('f-yrs'), team=v('f-team'), demo=v('f-demo'), linkedin=v('f-linkedin');
+    const demoHref=demo?(demo.startsWith('+')||/^\d/.test(demo)?wa(demo):safe(demo)):(d.phone?wa(d.phone):'');
+    const css = baseCSS(d.primary,d.accent,{bg:'#f8faff',surf:'#eef2ff'}) + `
+.hero{min-height:90vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(135deg,${d.primary},#1e3a6e)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.1}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:900;margin-bottom:14px;line-height:1.1}
+.hc p{font-size:1.1rem;opacity:.85;max-width:560px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:rgba(0,0,0,.08)}
+.stat-cell{background:var(--bg);padding:28px;text-align:center}
+.stat-n{font-size:2.2rem;font-weight:900;color:var(--p)}.stat-l{font-size:12px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.it-svc{background:var(--bg);border:1px solid rgba(0,0,0,.07);border-radius:14px;padding:26px;transition:box-shadow .2s,border-color .2s}
+.it-svc:hover{box-shadow:0 8px 28px rgba(59,130,246,.12);border-color:var(--a)}
+.it-svc-icon{font-size:2rem;margin-bottom:12px}
+.it-svc h3{color:var(--p);font-size:17px;font-weight:700;margin-bottom:8px}
+.it-svc p{font-size:13px;color:var(--muted);line-height:1.7}
+.why-grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+.why-tag{background:var(--surf);color:var(--p);padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;border-left:3px solid var(--a)}
+.tech-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.tech-tag{background:var(--p);color:#fff;padding:6px 16px;border-radius:6px;font-size:12px;font-weight:600;font-family:monospace}
+.it-rev{background:var(--bg);border-radius:14px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.it-rev-q{font-size:14px;color:#333;font-style:italic;line-height:1.8;margin-bottom:12px}
+.it-rev-name{font-weight:700;font-size:13px;color:var(--p)}
+.it-rev-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.cta-band{background:linear-gradient(135deg,${d.primary},#1e3a6e);color:#fff;padding:64px 0;text-align:center}
+.cta-band h2{font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;margin-bottom:12px}
+.cta-band p{opacity:.85;margin-bottom:28px;font-size:15px}`;
+    const stats = [proj&&['proj',proj,'Projects'],clients&&['cl',clients,'Clients'],yrs&&['yrs',yrs,'Years Exp.'],team&&['tm',team,'Team Size']].filter(Boolean);
+    const body = navHtml(logo,d.name,[['#services','Services'],why?['#why','Why Us']:null,tests.filter(t=>t.quote).length?['#clients','Clients']:null,['#contact','Contact']].filter(Boolean))
+      + heroSection(d,hero, demoHref?`<a href="${demoHref}" class="btn bp" target="_blank">Get Free Consultation</a>`:'', `<a href="#services" class="btn bo">Our Services</a>`)
+      + (stats.length?`<div class="stat-grid">${stats.map(s=>`<div class="stat-cell"><div class="stat-n">${esc(s[1])}</div><div class="stat-l">${s[2]}</div></div>`).join('')}</div>`:'')
+      + (svcs.filter(s=>s.name).length?`<section id="services"><div class="wrap"><div class="sl">What We Build</div><h2 class="st">Our Services</h2><div class="g3">${svcs.filter(s=>s.name).map(s=>`<div class="it-svc"><div class="it-svc-icon">${esc(s.icon||'💻')}</div><h3>${esc(s.name)}</h3>${s.desc?`<p>${esc(s.desc)}</p>`:''}</div>`).join('')}</div></div></section>`:'')
+      + (why||tech?`<section id="why" class="alt"><div class="wrap"><div class="g2" style="gap:48px">
+          ${why?`<div><div class="sl">Why Us</div><h2 class="st">Why Choose Us</h2><p class="ss">${esc(d.about)}</p><div class="why-grid">${why.split(',').map(w=>`<span class="why-tag">✓ ${esc(w.trim())}</span>`).join('')}</div></div>`:''}
+          ${tech?`<div><div class="sl">Stack</div><h2 class="st">Tech We Use</h2><div class="tech-grid">${tech.split(',').map(t=>`<span class="tech-tag">${esc(t.trim())}</span>`).join('')}</div></div>`:''}
+        </div></div></section>`:'')
+      + (tests.filter(t=>t.quote).length?`<section id="clients"><div class="wrap"><div class="sl">Success Stories</div><h2 class="st">What Clients Say</h2><div class="g3">${tests.filter(t=>t.quote).map(t=>`<div class="it-rev"><p class="it-rev-q">"${esc(t.quote)}"</p><div class="it-rev-name">${esc(t.name)}</div>${t.sub?`<div class="it-rev-sub">${esc(t.sub)}</div>`:''}</div>`).join('')}</div></div></section>`:'')
+      + (demoHref?`<div class="cta-band"><div class="wrap"><h2>Ready to Build Something Great?</h2><p>Let's discuss your project — free consultation, no commitment.</p><a href="${demoHref}" class="btn bp" target="_blank">Start a Conversation</a></div></div>`:'')
+      + contactSection(d, linkedin?`<div style="margin-top:20px"><a href="${safe(linkedin)}" target="_blank" style="color:var(--a);font-weight:600">Connect on LinkedIn →</a></div>`:'')
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+function addItSvc(){addItem('it-list',`
+  <div style="display:grid;grid-template-columns:60px 1fr;gap:6px">
+    <div class="field"><label>Icon</label><input type="text" data-f="icon" placeholder="🌐" oninput="livePreview()"></div>
+    <div class="field"><label>Service Name</label><input type="text" data-f="name" placeholder="Web Development" oninput="livePreview()"></div>
+  </div>
+  <div class="field"><label>Description</label><input type="text" data-f="desc" placeholder="Custom websites and web apps built with modern tech..." oninput="livePreview()"></div>`);}
+function addItTest(){addItem('it-test',`
+  <div class="field"><label>Client Name</label><input type="text" data-f="name" placeholder="Rajan K., CEO" oninput="livePreview()"></div>
+  <div class="field"><label>Testimonial</label><textarea data-f="quote" rows="2" placeholder="Delivered on time and exceeded our expectations..." oninput="livePreview()"></textarea></div>
+  <div class="field"><label>Company / Industry</label><input type="text" data-f="sub" placeholder="RetailCo · E-commerce" oninput="livePreview()"></div>`);}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CONSTRUCTION & CONTRACTING
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.construction = {
+  id:'construction', label:'Construction & Contracting', industry:'Construction',
+  defaultColors:{primary:'#1a1a1a',accent:'#f59e0b'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Services</h3><div id="con-list"></div>
+  <button class="add-btn" onclick="addConSvc()">+ Add Service</button></div>
+<div class="fg"><h3>Projects Gallery</h3><div class="gg" id="gal-con"></div></div>
+<div class="fg"><h3>Stats</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <div class="field"><label>Projects Completed</label><input type="text" id="f-proj" placeholder="350+" oninput="livePreview()"></div>
+    <div class="field"><label>Years Experience</label><input type="text" id="f-yrs" placeholder="15+" oninput="livePreview()"></div>
+    <div class="field"><label>Clients</label><input type="text" id="f-clients" placeholder="200+" oninput="livePreview()"></div>
+    <div class="field"><label>Team Size</label><input type="text" id="f-team" placeholder="50+" oninput="livePreview()"></div>
+  </div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>License / Registration No.</label><input type="text" id="f-lic" placeholder="PWD Reg. No. KL/2023/001" oninput="livePreview()"></div>
+  <div class="field"><label>Service Areas</label><input type="text" id="f-areas" placeholder="Kochi, Thrissur, Calicut, Trivandrum" oninput="livePreview()"></div>
+  <div class="field"><label>Free Quote WhatsApp</label><input type="text" id="f-wa" placeholder="+91 98765 43210" oninput="livePreview()"></div>
+  <div class="field"><label>Google Maps Embed URL</label><input type="url" id="f-maps" placeholder="https://maps.google.com/..." oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-con',['con1','con2','con3','con4','con5','con6']);
+    addConSvc(); addConSvc(); addConSvc();
+  },
+  build(d,fp) {
+    const svcs=getItems('con-list',['name','desc']);
+    const gkeys=['con1','con2','con3','con4','con5','con6'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const proj=v('f-proj'), yrs=v('f-yrs'), clients=v('f-clients'), team=v('f-team');
+    const lic=v('f-lic'), areas=v('f-areas'), waNum=v('f-wa')||d.phone, maps=v('f-maps');
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="project ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const stats=[proj&&[proj,'Projects'],yrs&&[yrs,'Years Exp.'],clients&&[clients,'Happy Clients'],team&&[team,'Workers']].filter(Boolean);
+    const css = baseCSS(d.primary,d.accent,{bg:'#f9f9f9',surf:'#f0f0f0'}) + `
+.hero{min-height:88vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(160deg,${d.primary},#333)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.3}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:900;margin-bottom:14px;line-height:1.1;text-transform:uppercase;letter-spacing:-1px}
+.hc p{font-size:1.05rem;opacity:.85;max-width:520px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.stat-band{background:var(--a);padding:24px 0}
+.stat-band .wrap{display:flex;justify-content:center;gap:48px;flex-wrap:wrap}
+.con-stat{text-align:center;color:var(--p)}
+.con-stat-n{font-size:2rem;font-weight:900}.con-stat-l{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.csvc{background:var(--bg);border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:24px;border-top:4px solid var(--a);transition:box-shadow .2s}
+.csvc:hover{box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.csvc h3{font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
+.csvc p{font-size:13px;color:var(--muted);line-height:1.7}
+.cgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.cgal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px}
+.areas-box{background:var(--surf);border-radius:10px;padding:18px;margin-top:16px;font-size:13px;color:var(--muted)}
+.cta-band{background:var(--p);color:#fff;padding:56px 0;text-align:center}
+.cta-band h2{font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:900;text-transform:uppercase;margin-bottom:12px}
+.cta-band p{opacity:.8;margin-bottom:24px}`;
+    const body = navHtml(logo,d.name,[['#services','Services'],galHtml?['#projects','Projects']:null,['#about','About'],['#contact','Contact']].filter(Boolean))
+      + heroSection(d,hero, waNum?`<a href="${wa(waNum)}" class="btn bp" target="_blank">Get Free Quote</a>`:'', `<a href="#services" class="btn bo">Our Services</a>`)
+      + (stats.length?`<div class="stat-band"><div class="wrap">${stats.map(s=>`<div class="con-stat"><div class="con-stat-n">${esc(s[0])}</div><div class="con-stat-l">${s[1]}</div></div>`).join('')}</div></div>`:'')
+      + (svcs.filter(s=>s.name).length?`<section id="services"><div class="wrap"><div class="sl">What We Do</div><h2 class="st">Our Services</h2><div class="g3">${svcs.filter(s=>s.name).map(s=>`<div class="csvc"><h3>🏗 ${esc(s.name)}</h3>${s.desc?`<p>${esc(s.desc)}</p>`:''}</div>`).join('')}</div></div></section>`:'')
+      + (galHtml?`<section id="projects" class="alt"><div class="wrap"><div class="sl">Our Work</div><h2 class="st">Completed Projects</h2><div class="cgal">${galHtml}</div></div></section>`:'')
+      + `<section id="about" ${galHtml?'':'class="alt"'}><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">About Us</div><h2 class="st">${esc(d.name)}</h2><p class="ss">${esc(d.about)}</p>
+          ${lic?`<p style="font-size:12px;color:var(--muted);margin-top:10px">📋 ${esc(lic)}</p>`:''}
+          ${areas?`<div class="areas-box">📍 Service Areas: <strong>${esc(areas)}</strong></div>`:''}</div>
+          <div style="background:var(--surf);border-radius:14px;padding:28px">
+            <p style="font-size:1.05rem;line-height:1.9;color:var(--p);font-style:italic">"Building dreams. Delivering excellence. On time, every time."</p>
+          </div></div></div></section>`
+      + (waNum?`<div class="cta-band"><div class="wrap"><h2>Start Your Project Today</h2><p>Free site visit and quotation. No obligations.</p><a href="${wa(waNum)}" class="btn bp" target="_blank">WhatsApp for Free Quote</a></div></div>`:'')
+      + contactSection(d, maps?`<div style="margin-top:28px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:'')
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+function addConSvc(){addItem('con-list',`
+  <div class="field"><label>Service</label><input type="text" data-f="name" placeholder="Residential Construction" oninput="livePreview()"></div>
+  <div class="field"><label>Description</label><input type="text" data-f="desc" placeholder="End-to-end home building with quality materials..." oninput="livePreview()"></div>`);}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INTERIOR DESIGN
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.interior = {
+  id:'interior', label:'Interior Design', industry:'Interior Design',
+  defaultColors:{primary:'#2d2d2d',accent:'#b5936b'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Services</h3><div id="int-list"></div>
+  <button class="add-btn" onclick="addIntSvc()">+ Add Service</button></div>
+<div class="fg"><h3>Portfolio Gallery</h3><div class="gg" id="gal-int"></div></div>
+<div class="fg"><h3>Design Styles <small style="color:#475569;font-weight:400">(comma-separated)</small></h3>
+  <div class="field"><input type="text" id="f-styles" placeholder="Modern, Minimalist, Traditional, Contemporary, Luxury" oninput="livePreview()"></div></div>
+<div class="fg"><h3>Client Testimonials</h3><div id="int-test"></div>
+  <button class="add-btn" onclick="addIntTest()">+ Add Testimonial</button></div>
+<div class="fg"><h3>Stats</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <div class="field"><label>Projects Done</label><input type="text" id="f-proj" placeholder="180+" oninput="livePreview()"></div>
+    <div class="field"><label>Years Experience</label><input type="text" id="f-yrs" placeholder="10+" oninput="livePreview()"></div>
+  </div></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Consultation Link / WhatsApp</label><input type="text" id="f-book" placeholder="https://... or +91 98765 43210" oninput="livePreview()"></div>
+  <div class="field"><label>Instagram Handle</label><input type="text" id="f-insta" placeholder="@yourdesigns" oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-int',['int1','int2','int3','int4','int5','int6']);
+    addIntSvc(); addIntSvc(); addIntSvc();
+    addIntTest();
+  },
+  build(d,fp) {
+    const svcs=getItems('int-list',['name','desc']);
+    const tests=getItems('int-test',['name','quote','sub']);
+    const gkeys=['int1','int2','int3','int4','int5','int6'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const styles=v('f-styles'), proj=v('f-proj'), yrs=v('f-yrs'), book=v('f-book'), insta=v('f-insta');
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="interior ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const bookHref=book?(book.startsWith('+')||/^\d/.test(book)?wa(book):safe(book)):(d.phone?wa(d.phone):'');
+    const css = baseCSS(d.primary,d.accent,{bg:'#faf9f7',surf:'#f0ece4'}) + `
+.hero{min-height:90vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(160deg,${d.primary},#4a4a4a)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.28}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2rem,4.5vw,3.6rem);font-weight:800;margin-bottom:14px;font-style:italic}
+.hc p{font-size:1.05rem;opacity:.85;max-width:500px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.stat-row{display:flex;gap:48px;flex-wrap:wrap;margin-top:20px}
+.istat{text-align:left}.istat-n{font-size:2rem;font-weight:900;color:var(--a)}.istat-l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.isvc{background:var(--bg);border-radius:14px;padding:26px;border-bottom:3px solid var(--a);transition:box-shadow .2s}
+.isvc:hover{box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.isvc h3{font-size:17px;font-weight:700;margin-bottom:8px;color:var(--p)}
+.isvc p{font-size:13px;color:var(--muted);line-height:1.7}
+.style-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.style-tag{background:var(--surf);color:var(--p);padding:7px 18px;border-radius:4px;font-size:13px;font-weight:600;border:1px solid rgba(0,0,0,.1)}
+.igal{columns:2;gap:10px}
+.igal img{width:100%;margin-bottom:10px;break-inside:avoid;border-radius:8px;display:block}
+@media(min-width:640px){.igal{columns:3}}
+.irev{background:var(--bg);border-radius:14px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.irev-q{font-size:14px;font-style:italic;color:#444;line-height:1.8;margin-bottom:12px}
+.irev-name{font-weight:700;font-size:13px;color:var(--p)}
+.irev-sub{font-size:12px;color:var(--muted);margin-top:2px}`;
+    const body = navHtml(logo,d.name,[svcs.filter(s=>s.name).length?['#services','Services']:null,galHtml?['#portfolio','Portfolio']:null,tests.filter(t=>t.quote).length?['#reviews','Reviews']:null,['#contact','Contact']].filter(Boolean))
+      + heroSection(d,hero, bookHref?`<a href="${bookHref}" class="btn bp" target="_blank">Free Consultation</a>`:'', galHtml?`<a href="#portfolio" class="btn bo">View Portfolio</a>`:'')
+      + `<section id="about" class="alt"><div class="wrap"><div class="g2" style="align-items:center;gap:48px">
+          <div><div class="sl">About Us</div><h2 class="st">${esc(d.name)}</h2><p class="ss">${esc(d.about)}</p>
+          ${insta?`<p style="margin-top:12px"><a href="https://instagram.com/${insta.replace('@','')}" target="_blank" style="color:var(--a);font-weight:600">${esc(insta)} on Instagram</a></p>`:''}
+          <div class="stat-row">
+            ${proj?`<div class="istat"><div class="istat-n">${esc(proj)}</div><div class="istat-l">Projects</div></div>`:''}
+            ${yrs?`<div class="istat"><div class="istat-n">${esc(yrs)}</div><div class="istat-l">Years Exp.</div></div>`:''}
+          </div></div>
+          <div style="background:var(--bg);border-radius:14px;padding:28px">
+            <p style="font-size:1.05rem;line-height:1.9;color:var(--p);font-style:italic">"Spaces that tell your story. Design that feels like home."</p>
+          </div></div></div></section>`
+      + (svcs.filter(s=>s.name).length?`<section id="services"><div class="wrap"><div class="sl">What We Offer</div><h2 class="st">Our Services</h2><div class="g3">${svcs.filter(s=>s.name).map(s=>`<div class="isvc"><h3>🏠 ${esc(s.name)}</h3>${s.desc?`<p>${esc(s.desc)}</p>`:''}</div>`).join('')}</div>${styles?`<div style="margin-top:36px"><div class="sl">Design Styles</div><div class="style-tags">${styles.split(',').map(s=>`<span class="style-tag">${esc(s.trim())}</span>`).join('')}</div></div>`:''}</div></section>`:'')
+      + (galHtml?`<section id="portfolio" class="alt"><div class="wrap"><div class="sl">Our Work</div><h2 class="st">Portfolio</h2><div class="igal">${galHtml}</div></div></section>`:'')
+      + (tests.filter(t=>t.quote).length?`<section id="reviews"><div class="wrap"><div class="sl">Happy Clients</div><h2 class="st">What They Say</h2><div class="g3">${tests.filter(t=>t.quote).map(t=>`<div class="irev"><p class="irev-q">"${esc(t.quote)}"</p><div class="irev-name">— ${esc(t.name)}</div>${t.sub?`<div class="irev-sub">${esc(t.sub)}</div>`:''}</div>`).join('')}</div></div></section>`:'')
+      + contactSection(d, bookHref?`<div style="margin-top:28px;text-align:center"><a href="${bookHref}" class="btn bp" target="_blank">Book Free Consultation</a></div>`:'')
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+function addIntSvc(){addItem('int-list',`
+  <div class="field"><label>Service</label><input type="text" data-f="name" placeholder="Living Room Design" oninput="livePreview()"></div>
+  <div class="field"><label>Description</label><input type="text" data-f="desc" placeholder="Complete living room transformation with 3D preview..." oninput="livePreview()"></div>`);}
+function addIntTest(){addItem('int-test',`
+  <div class="field"><label>Client Name</label><input type="text" data-f="name" placeholder="Arun & Deepa" oninput="livePreview()"></div>
+  <div class="field"><label>Review</label><textarea data-f="quote" rows="2" placeholder="Transformed our home beyond imagination. Every detail was perfect..." oninput="livePreview()"></textarea></div>
+  <div class="field"><label>Project / Location</label><input type="text" data-f="sub" placeholder="3BHK Apartment · Kochi" oninput="livePreview()"></div>`);}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CATERING SERVICES
+// ══════════════════════════════════════════════════════════════════════════════
+TEMPLATES.catering = {
+  id:'catering', label:'Catering Services', industry:'Food & Events',
+  defaultColors:{primary:'#7b2d00',accent:'#c8860a'},
+  onSelect() {
+    setColors(this.defaultColors.primary, this.defaultColors.accent);
+    document.getElementById('extra-fields').innerHTML = `
+<div class="fg"><h3>Packages / Menus</h3><div id="cat-list"></div>
+  <button class="add-btn" onclick="addCatPkg()">+ Add Package</button></div>
+<div class="fg"><h3>Cuisine Types <small style="color:#475569;font-weight:400">(comma-separated)</small></h3>
+  <div class="field"><input type="text" id="f-cuisine" placeholder="Kerala Sadya, North Indian, Continental, Chinese, BBQ" oninput="livePreview()"></div></div>
+<div class="fg"><h3>Food Gallery</h3><div class="gg" id="gal-cat"></div></div>
+<div class="fg"><h3>Client Reviews</h3><div id="cat-test"></div>
+  <button class="add-btn" onclick="addCatTest()">+ Add Review</button></div>
+<div class="fg"><h3>Details</h3>
+  <div class="field"><label>Minimum Order / Guests</label><input type="text" id="f-min" placeholder="Minimum 50 guests" oninput="livePreview()"></div>
+  <div class="field"><label>Events Catered</label><input type="text" id="f-events" placeholder="Weddings, Corporate, Birthday, Festivals" oninput="livePreview()"></div>
+  <div class="field"><label>Service Areas</label><input type="text" id="f-areas" placeholder="Kochi, Thrissur, Ernakulam" oninput="livePreview()"></div>
+  <div class="field"><label>Booking WhatsApp</label><input type="text" id="f-wa" placeholder="+91 98765 43210" oninput="livePreview()"></div>
+</div>`;
+    initGal('gal-cat',['cat1','cat2','cat3','cat4','cat5','cat6']);
+    addCatPkg(); addCatPkg();
+    addCatTest();
+  },
+  build(d,fp) {
+    const pkgs=getItems('cat-list',['name','price','desc','pax']);
+    const tests=getItems('cat-test',['name','quote','sub']);
+    const gkeys=['cat1','cat2','cat3','cat4','cat5','cat6'];
+    const hero=fp?(IMG.hero?.url||''):(IMG.hero?.name||'');
+    const logo=fp?(IMG.logo?.url||''):(IMG.logo?.name||'');
+    const cuisine=v('f-cuisine'), minOrd=v('f-min'), events=v('f-events'), areas=v('f-areas'), waNum=v('f-wa')||d.phone;
+    const galHtml=gkeys.map((k,i)=>{const s=fp?(IMG[k]?.url||''):(IMG[k]?.name||'');return s?`<img src="${s}" alt="food ${i+1}" loading="lazy">`:''}).filter(Boolean).join('');
+    const css = baseCSS(d.primary,d.accent,{bg:'#fdf9f5',surf:'#f5ece0'}) + `
+.hero{min-height:88vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(150deg,${d.primary}ee,#4a1a00)}
+.hbg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.22}
+.hc{position:relative;z-index:1;color:#fff;padding:80px 0}
+.hc h1{font-size:clamp(2rem,4.5vw,3.6rem);font-weight:800;margin-bottom:14px}
+.hc p{font-size:1.05rem;opacity:.88;max-width:520px;margin-bottom:28px}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap}
+.info-strip{background:var(--a);color:#fff;padding:14px 0}
+.info-strip .wrap{display:flex;justify-content:center;gap:36px;flex-wrap:wrap;font-size:13px;font-weight:600}
+.info-strip span{display:flex;align-items:center;gap:6px}
+.cpkg{background:var(--bg);border:1px solid rgba(0,0,0,.08);border-radius:14px;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.cpkg:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.1)}
+.cpkg-head{background:linear-gradient(135deg,${d.primary},#a04010);color:#fff;padding:20px}
+.cpkg-head h3{font-size:18px;font-weight:700;margin-bottom:4px}
+.cpkg-price{font-size:1.4rem;font-weight:800;color:var(--a)}
+.cpkg-body{padding:20px}
+.cpkg-body p{font-size:13px;color:var(--muted);line-height:1.7}
+.cpkg-pax{font-size:12px;background:rgba(0,0,0,.06);display:inline-block;padding:3px 10px;border-radius:20px;margin-bottom:10px;color:var(--p);font-weight:600}
+.cui-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.cui-tag{background:var(--surf);color:var(--p);padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600}
+.cgal2{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.cgal2 img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}
+.crev{background:var(--bg);border-left:4px solid var(--a);padding:20px;border-radius:0 10px 10px 0}
+.crev p{font-size:14px;font-style:italic;color:#444;line-height:1.8;margin-bottom:10px}
+.crev strong{font-size:13px;color:var(--p)}
+.crev small{font-size:12px;color:var(--muted)}`;
+    const body = navHtml(logo,d.name,[pkgs.filter(p=>p.name).length?['#packages','Packages']:null,cuisine?['#cuisine','Cuisine']:null,galHtml?['#gallery','Gallery']:null,['#contact','Book Now']].filter(Boolean))
+      + heroSection(d,hero, waNum?`<a href="${wa(waNum)}" class="btn bp" target="_blank">Get a Quote on WhatsApp</a>`:'', `<a href="#packages" class="btn bo">View Packages</a>`)
+      + ((minOrd||events||areas)?`<div class="info-strip"><div class="wrap">
+          ${minOrd?`<span>👥 ${esc(minOrd)}</span>`:''}
+          ${events?`<span>🎉 ${esc(events)}</span>`:''}
+          ${areas?`<span>📍 ${esc(areas)}</span>`:''}
+        </div></div>`:'')
+      + `<section id="about" class="alt"><div class="wrap"><div class="g2" style="align-items:center;gap:40px">
+          <div><div class="sl">About Us</div><h2 class="st">${esc(d.name)}</h2><p class="ss">${esc(d.about)}</p></div>
+          <div style="background:var(--bg);border-radius:14px;padding:28px">
+            <p style="font-size:1.05rem;line-height:1.9;color:var(--p);font-style:italic">"Great food. Flawless service. Memories that last."</p>
+          </div></div></div></section>`
+      + (pkgs.filter(p=>p.name).length?`<section id="packages"><div class="wrap"><div class="sl">Choose Your Menu</div><h2 class="st">Catering Packages</h2><div class="g3">${pkgs.filter(p=>p.name).map(p=>`<div class="cpkg"><div class="cpkg-head"><h3>${esc(p.name)}</h3>${p.price?`<div class="cpkg-price">${esc(p.price)}</div>`:''}</div><div class="cpkg-body">${p.pax?`<span class="cpkg-pax">👥 ${esc(p.pax)}</span>`:''} ${p.desc?`<p>${esc(p.desc)}</p>`:''} ${waNum?`<a href="${wa(waNum)}" class="btn bp" style="margin-top:14px;font-size:12px;padding:8px 18px;width:100%;justify-content:center" target="_blank">Book This</a>`:''}</div></div>`).join('')}</div></div></section>`:'')
+      + (cuisine?`<section id="cuisine" class="alt"><div class="wrap"><div class="sl">What We Cook</div><h2 class="st">Cuisine Specialities</h2><div class="cui-tags">${cuisine.split(',').map(c=>`<span class="cui-tag">🍽 ${esc(c.trim())}</span>`).join('')}</div></div></section>`:'')
+      + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Fresh & Delicious</div><h2 class="st">Food Gallery</h2><div class="cgal2">${galHtml}</div></div></section>`:'')
+      + (tests.filter(t=>t.quote).length?`<section class="alt"><div class="wrap"><div class="sl">Happy Clients</div><h2 class="st">Reviews</h2><div class="g2">${tests.filter(t=>t.quote).map(t=>`<div class="crev"><p>"${esc(t.quote)}"</p><strong>— ${esc(t.name)}</strong> ${t.sub?`<small> · ${esc(t.sub)}</small>`:''}</div>`).join('')}</div></div></section>`:'')
+      + contactSection(d, waNum?`<div style="margin-top:28px;text-align:center"><a href="${wa(waNum)}" class="btn bp" target="_blank">WhatsApp for Booking</a></div>`:'')
+      + footerHtml(d.name);
+    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+  }
+};
+function addCatPkg(){addItem('cat-list',`
+  <div class="field"><label>Package Name</label><input type="text" data-f="name" placeholder="Premium Wedding Catering" oninput="livePreview()"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <div class="field"><label>Price</label><input type="text" data-f="price" placeholder="₹450/plate" oninput="livePreview()"></div>
+    <div class="field"><label>Min. Guests</label><input type="text" data-f="pax" placeholder="Min. 100 guests" oninput="livePreview()"></div>
+  </div>
+  <div class="field"><label>Includes</label><input type="text" data-f="desc" placeholder="20 dishes, live counters, service staff, setup..." oninput="livePreview()"></div>`);}
+function addCatTest(){addItem('cat-test',`
+  <div class="field"><label>Client Name</label><input type="text" data-f="name" placeholder="Sreeja & Family" oninput="livePreview()"></div>
+  <div class="field"><label>Review</label><textarea data-f="quote" rows="2" placeholder="The food was absolutely amazing. All 300 guests loved it!" oninput="livePreview()"></textarea></div>
+  <div class="field"><label>Event / Date</label><input type="text" data-f="sub" placeholder="Wedding · Jan 2025" oninput="livePreview()"></div>`);}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 buildGrid();
 selectTpl('restaurant');
