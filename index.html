@@ -369,7 +369,9 @@ TEMPLATES.restaurant = {
       + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Fresh &amp; Delicious</div><h2 class="st">Gallery</h2><div class="fgal">${galHtml}</div></div></section>`:'')
       + contactSection(d, maps?`<div style="margin-top:32px;border-radius:12px;overflow:hidden;height:300px"><iframe src="${esc(maps)}" width="100%" height="300" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:'')
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, cuisine, d.tagline, d.about, hours?`Open: ${hours}`:'', d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"Restaurant","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"openingHours":hours||'',"servesCuisine":cuisine||'',"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 
@@ -432,7 +434,9 @@ TEMPLATES.wellness = {
       + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Our Space</div><h2 class="st">A Place to Heal</h2><div class="wgal">${galHtml}</div></div></section>`:'')
       + contactSection(d, book?`<div style="margin-top:32px;text-align:center"><a href="${safe(book)}" class="btn bp" target="_blank">Book Online</a></div>`:'')
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, usp, d.tagline, d.about, hours?`Timings: ${hours}`:'', d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"HealthAndBeautyBusiness","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"openingHours":hours||'',"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 
@@ -506,7 +510,9 @@ section{background:var(--bg)}.alt{background:var(--surf)}
       + (pkgs.filter(p=>p.name).length?`<section id="packages"><div class="wrap"><div class="sl">Invest in Memories</div><h2 class="st">Packages</h2><div class="g3">${pkgs.filter(p=>p.name).map(p=>`<div class="pkgc"><h3>${esc(p.name)}</h3>${p.price?`<div class="pkgp">${esc(p.price)}</div>`:''} ${p.inc?`<p class="pkgi">${esc(p.inc).replace(/,/g,'<br>')}</p>`:''} ${d.phone?`<a href="${wa(d.phone)}" class="btn bp" target="_blank" style="margin-top:16px;width:100%;justify-content:center">Book Now</a>`:''}</div>`).join('')}</div></div></section>`:'')
       + contactSection(d)
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, yrs?`${yrs} years experience`:'', specs, d.tagline, d.about, d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"Photographer","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 
@@ -571,7 +577,9 @@ TEMPLATES.tour = {
       + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Destinations</div><h2 class="st">Where We Take You</h2><div class="dgal">${galHtml}</div></div></section>`:'')
       + contactSection(d, waNum?`<div style="margin-top:32px;text-align:center"><a href="${wa(waNum)}" class="btn bp" target="_blank">Chat on WhatsApp</a></div>`:'')
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, d.tagline, d.about, langs?`Languages: ${langs}`:'', d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"TravelAgency","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 
@@ -631,7 +639,9 @@ TEMPLATES.boutique = {
       + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Our Products</div><h2 class="st">Gallery</h2><div class="sgal">${galHtml}</div></div></section>`:'')
       + contactSection(d, maps?`<div style="margin-top:32px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:'')
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, d.tagline, d.about, hours?`Open: ${hours}`:'', d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"ClothingStore","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"openingHours":hours||'',"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 
@@ -910,7 +920,9 @@ nav{background:#fff;border-bottom:2px solid #f0f0f0}
       + footerHtml(d.name);
 
     const css2 = css;
-    return {'index.html':wrap(d.name,css2,body,d.phone),'style.css':css2};
+    const desc = [d.name, d.tagline||'Train Hard. Get Results.', d.about, hours?`Hours: ${hours}`:'', d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"ExerciseGym","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"openingHours":hours||'',"url":""};
+    return {'index.html':wrap(d.name,css2,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css2};
   }
 };
 
@@ -981,7 +993,9 @@ TEMPLATES.realestate = {
       + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Portfolio</div><h2 class="st">Properties</h2><div class="rgal">${galHtml}</div></div></section>`:'')
       + contactSection(d, waNum?`<div style="margin-top:32px;text-align:center"><a href="${wa(waNum)}" class="btn bp" target="_blank">WhatsApp Enquiry</a></div>`:'')
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, agent, d.tagline, d.about, rera, d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"RealEstateAgent","name":agent||d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 function addProp(){addItem('prop-list',`
@@ -1060,7 +1074,9 @@ TEMPLATES.dental = {
       + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Our Clinic</div><h2 class="st">Gallery</h2><div class="dgal2">${galHtml}</div></div></section>`:'')
       + contactSection(d, (bookHref||maps)?`${bookHref?`<div style="margin-top:32px;text-align:center"><a href="${bookHref}" class="btn bp" target="_blank">Book Appointment</a></div>`:''}${maps?`<div style="margin-top:28px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:''}`:'' )
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, doc, d.tagline, d.about, hours?`Hours: ${hours}`:'', d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"Dentist","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"openingHours":hours||'',"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 function addDenSvc(){addItem('den-list',`
@@ -1146,7 +1162,9 @@ TEMPLATES.clinic = {
       + (galHtml?`<section class="alt"><div class="wrap"><div class="sl">Our Facility</div><h2 class="st">Gallery</h2><div class="mgal">${galHtml}</div></div></section>`:'')
       + contactSection(d, `${bookHref?`<div style="margin-top:28px;text-align:center"><a href="${bookHref}" class="btn bp" target="_blank">Book Appointment</a></div>`:''}${maps?`<div style="margin-top:28px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:''}`)
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, d.tagline, d.about, hours?`Hours: ${hours}`:'', emg?`Emergency: ${emg}`:'', d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"MedicalClinic","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"openingHours":hours||'',"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 function addMedSvc(){addItem('med-list',`
@@ -1243,7 +1261,9 @@ TEMPLATES.hotel = {
       + (galHtml?`<section id="gallery" class="alt"><div class="wrap"><div class="sl">Our Property</div><h2 class="st">Gallery</h2><div class="hgal">${galHtml}</div></div></section>`:'')
       + contactSection(d, `${book?`<div style="margin-top:28px;text-align:center"><a href="${safe(book)}" class="btn bp" target="_blank">Book a Room</a></div>`:''}${maps?`<div style="margin-top:28px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:''}`)
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, stars, d.tagline, d.about, ci, d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"Hotel","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"starRating":{"@type":"Rating","ratingValue":parseInt(stars)||4},"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 function addRoom(){addItem('room-list',`
@@ -1341,7 +1361,9 @@ TEMPLATES.wedding = {
       + (galHtml?`<section id="gallery" class="alt"><div class="wrap"><div class="sl">Our Work</div><h2 class="st">Gallery</h2><div class="wgal2">${galHtml}</div></div></section>`:'')
       + contactSection(d, waNum?`<div style="margin-top:28px;text-align:center"><a href="${wa(waNum)}" class="btn bp" target="_blank">Get Free Quote on WhatsApp</a></div>`:'')
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, d.tagline, yrs?`${yrs} experience`:'', events, d.about, d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"EventPlanner","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 function addWedPkg(){addItem('wed-pkg',`
@@ -1423,7 +1445,9 @@ TEMPLATES.salon = {
       + (galHtml?`<section id="gallery"><div class="wrap"><div class="sl">Our Work</div><h2 class="st">Gallery</h2><div class="sgal2">${galHtml}</div></div></section>`:'')
       + contactSection(d, `${bookHref?`<div style="margin-top:28px;text-align:center"><a href="${bookHref}" class="btn bp" target="_blank">Book an Appointment</a></div>`:''}${maps?`<div style="margin-top:28px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:''}`)
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, usp, d.tagline, d.about, hours?`Hours: ${hours}`:'', d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"BeautySalon","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"openingHours":hours||'',"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 function addSalSvc(){addItem('sal-list',`
@@ -1499,7 +1523,9 @@ TEMPLATES.jewellery = {
       + (galHtml?`<section id="gallery" class="alt"><div class="wrap"><div class="sl">Our Pieces</div><h2 class="st">Showcase</h2><div class="jgal">${galHtml}</div></div></section>`:'')
       + contactSection(d, `${waNum?`<div style="margin-top:28px;text-align:center"><a href="${wa(waNum)}" class="btn bp" target="_blank">WhatsApp Enquiry</a></div>`:''}${maps?`<div style="margin-top:28px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:''}`)
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, usp, d.tagline, d.about, hours?`Open: ${hours}`:'', d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"JewelryStore","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"openingHours":hours||'',"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 function addJewCol(){addItem('jew-list',`
@@ -1583,7 +1609,9 @@ TEMPLATES.itservices = {
       + (demoHref?`<div class="cta-band"><div class="wrap"><h2>Ready to Build Something Great?</h2><p>Let's discuss your project — free consultation, no commitment.</p><a href="${demoHref}" class="btn bp" target="_blank">Start a Conversation</a></div></div>`:'')
       + contactSection(d, linkedin?`<div style="margin-top:20px"><a href="${safe(linkedin)}" target="_blank" style="color:var(--a);font-weight:600">Connect on LinkedIn →</a></div>`:'')
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, d.tagline, d.about, tech?`Tech: ${tech}`:'', d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"ProfessionalService","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 function addItSvc(){addItem('it-list',`
@@ -1670,7 +1698,9 @@ TEMPLATES.construction = {
       + (waNum?`<div class="cta-band"><div class="wrap"><h2>Start Your Project Today</h2><p>Free site visit and quotation. No obligations.</p><a href="${wa(waNum)}" class="btn bp" target="_blank">WhatsApp for Free Quote</a></div></div>`:'')
       + contactSection(d, maps?`<div style="margin-top:28px;border-radius:12px;overflow:hidden;height:280px"><iframe src="${esc(maps)}" width="100%" height="280" style="border:0" allowfullscreen loading="lazy"></iframe></div>`:'')
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, d.tagline, d.about, areas?`Serving: ${areas}`:'', lic, d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"GeneralContractor","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 function addConSvc(){addItem('con-list',`
@@ -1754,7 +1784,9 @@ TEMPLATES.interior = {
       + (tests.filter(t=>t.quote).length?`<section id="reviews"><div class="wrap"><div class="sl">Happy Clients</div><h2 class="st">What They Say</h2><div class="g3">${tests.filter(t=>t.quote).map(t=>`<div class="irev"><p class="irev-q">"${esc(t.quote)}"</p><div class="irev-name">— ${esc(t.name)}</div>${t.sub?`<div class="irev-sub">${esc(t.sub)}</div>`:''}</div>`).join('')}</div></div></section>`:'')
       + contactSection(d, bookHref?`<div style="margin-top:28px;text-align:center"><a href="${bookHref}" class="btn bp" target="_blank">Book Free Consultation</a></div>`:'')
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, styles, d.tagline, d.about, proj?`${proj} projects`:'', d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"InteriorDesigner","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 function addIntSvc(){addItem('int-list',`
@@ -1843,7 +1875,9 @@ TEMPLATES.catering = {
       + (tests.filter(t=>t.quote).length?`<section class="alt"><div class="wrap"><div class="sl">Happy Clients</div><h2 class="st">Reviews</h2><div class="g2">${tests.filter(t=>t.quote).map(t=>`<div class="crev"><p>"${esc(t.quote)}"</p><strong>— ${esc(t.name)}</strong> ${t.sub?`<small> · ${esc(t.sub)}</small>`:''}</div>`).join('')}</div></div></section>`:'')
       + contactSection(d, waNum?`<div style="margin-top:28px;text-align:center"><a href="${wa(waNum)}" class="btn bp" target="_blank">WhatsApp for Booking</a></div>`:'')
       + footerHtml(d.name);
-    return {'index.html':wrap(d.name,css,body,d.phone),'style.css':css};
+    const desc = [d.name, cuisine, d.tagline, d.about, minOrd, areas?`Serving: ${areas}`:'', d.address].filter(Boolean).join(' · ').slice(0,155);
+    const schema = {"@context":"https://schema.org","@type":"FoodService","name":d.name,"description":d.about||'',"telephone":d.phone||'',"address":{"@type":"PostalAddress","streetAddress":d.address||''},"servesCuisine":cuisine||'',"url":""};
+    return {'index.html':wrap(d.name,css,body,d.phone,{desc,hero:fp?IMG.hero?.url||'':IMG.hero?.name||'',schema}),'style.css':css};
   }
 };
 function addCatPkg(){addItem('cat-list',`
