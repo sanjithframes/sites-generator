@@ -281,8 +281,24 @@ function footerHtml(name) {
   return `<footer><p>&copy; ${new Date().getFullYear()} <strong>${esc(name)}</strong>. All rights reserved.</p></footer>`;
 }
 
-function wrap(title, css, body, phone) {
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${css}</style></head><body>${body}${wafab(phone)}<script>${navJs()}<\/script></body></html>`;
+function wrap(title, css, body, phone, meta={}) {
+  const desc  = meta.desc  || '';
+  const hero  = meta.hero  || '';
+  const addr  = meta.addr  || '';
+  const schema = meta.schema ? `<script type="application/ld+json">${JSON.stringify(meta.schema)}<\/script>` : '';
+  const ogImg  = hero ? `<meta property="og:image" content="${esc(hero)}">` : '';
+  return `<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(title)}</title>
+${desc?`<meta name="description" content="${esc(desc)}">`:'' }
+<meta property="og:type" content="website">
+<meta property="og:title" content="${esc(title)}">
+${desc?`<meta property="og:description" content="${esc(desc)}">`:'' }
+${ogImg}
+<meta name="robots" content="index, follow">
+${schema}
+<style>${css}</style>
+</head><body>${body}${wafab(phone)}<script>${navJs()}<\/script></body></html>`;
 }
 
 // ─── TEMPLATES ────────────────────────────────────────────────────────────────
