@@ -62,7 +62,35 @@ main{display:flex;flex:1;overflow:hidden}
 #preview-bar{background:#13151f;border-bottom:1px solid #1e2235;padding:0 14px;height:38px;display:flex;align-items:center;flex-shrink:0}
 #preview-bar span{font-size:11px;color:#475569}
 #preview-iframe{flex:1;border:none;background:#fff}
+#dpl-btn{background:linear-gradient(135deg,#059669,#047857);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s;width:100%;margin-top:8px}
+#dpl-btn:hover{opacity:.9}
+#dpl-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:900;align-items:center;justify-content:center}
+#dpl-overlay.open{display:flex}
+#dpl-card{background:#1a1d27;border:1px solid #2d3148;border-radius:14px;padding:22px;width:430px;max-width:92vw;max-height:90vh;overflow-y:auto}
+#dpl-card h2{font-size:15px;color:#e2e8f0;margin-bottom:16px}
+.dpl-lbl{display:block;font-size:11px;color:#94a3b8;margin-bottom:3px}
+.dpl-inp{width:100%;background:#13151f;border:1px solid #2d3148;border-radius:6px;color:#e2e8f0;font-size:13px;padding:8px 10px;outline:none;transition:border-color .15s;margin-bottom:12px}
+.dpl-inp:focus{border-color:#7c3aed}
+.dpl-inp.err{border-color:#dc2626}
+#dpl-preview{font-size:11px;color:#475569;margin:-8px 0 14px}
+#dpl-preview b{color:#7c3aed}
+#dpl-cfg{border-top:1px solid #1e2235;padding-top:12px;margin-bottom:14px}
+#dpl-cfg-toggle{background:none;border:none;color:#475569;font-size:11px;cursor:pointer;padding:0;margin-bottom:10px}
+#dpl-cfg-toggle:hover{color:#94a3b8}
+#dpl-cfg-fields{display:none}
+#dpl-cfg-fields.open{display:block}
+#dpl-go{width:100%;background:linear-gradient(135deg,#059669,#047857);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+#dpl-go:hover{opacity:.9}
+#dpl-go:disabled{opacity:.5;cursor:not-allowed}
+#dpl-status{margin-top:12px}
+.dpl-ok{background:#064e3b;border:1px solid #059669;border-radius:8px;padding:12px}
+.dpl-ok strong{display:block;color:#34d399;font-size:13px;margin-bottom:6px}
+.dpl-ok a{color:#6ee7b7;font-size:12px;word-break:break-all}
+.dpl-err{background:#450a0a;border:1px solid #dc2626;border-radius:8px;padding:12px}
+.dpl-err p{color:#fca5a5;font-size:12px;margin:0 0 4px}
+.dpl-err small{color:#94a3b8;font-size:11px}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 <header>
@@ -106,6 +134,7 @@ main{display:flex;flex:1;overflow:hidden}
   </div>
   <div id="gen-bar">
     <button id="gen-btn" onclick="generate()">Generate Website</button>
+    <button id="dpl-btn" onclick="openDeploy()">Deploy Live ⚡</button>
   </div>
 </div>
 <div id="preview-panel">
@@ -113,6 +142,34 @@ main{display:flex;flex:1;overflow:hidden}
   <iframe id="preview-iframe" srcdoc="<p style='font:14px sans-serif;color:#999;padding:40px;text-align:center'>Select a template to begin</p>"></iframe>
 </div>
 </main>
+
+<!-- Deploy Modal -->
+<div id="dpl-overlay" onclick="dplOverlayClick(event)">
+  <div id="dpl-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h2 style="margin:0">Deploy Live ⚡</h2>
+      <button onclick="closeDeploy()" style="background:none;border:none;color:#475569;cursor:pointer;font-size:20px;line-height:1;padding:0 4px">×</button>
+    </div>
+
+    <label class="dpl-lbl">Site Name (becomes your URL)</label>
+    <input id="dpl-name" class="dpl-inp" type="text" placeholder="my-business" oninput="dplNameChange(this)">
+    <div id="dpl-preview">→ live at <b id="dpl-url-preview">sitename</b>.smart-forms.in</div>
+
+    <button id="dpl-go" onclick="deployNow()">Deploy →</button>
+    <div id="dpl-status"></div>
+
+    <div id="dpl-cfg">
+      <button id="dpl-cfg-toggle" onclick="toggleDplCfg()">⚙ API Settings</button>
+      <div id="dpl-cfg-fields">
+        <label class="dpl-lbl">deployguy API URL</label>
+        <input id="dpl-api-url" class="dpl-inp" type="url" placeholder="http://72.61.253.142:9000">
+        <label class="dpl-lbl">API Key</label>
+        <input id="dpl-api-key" class="dpl-inp" type="password" placeholder="your-secret-key">
+        <button onclick="saveDplCfg()" style="background:#1e2235;border:1px solid #2d3148;color:#e2e8f0;font-size:12px;padding:7px 14px;border-radius:6px;cursor:pointer;width:100%">Save Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -1949,6 +2006,155 @@ function addCatTest(){addItem('cat-test',`
 // ─── Init ─────────────────────────────────────────────────────────────────────
 buildGrid();
 selectTpl('restaurant');
+
+// ─── Deploy ───────────────────────────────────────────────────────────────────
+const GAL_KEYS = [
+  'rg1','rg2','rg3','rg4','rg5','rg6',
+  'wg1','wg2','wg3','wg4','wg5','wg6','pg1','pg2','pg3','pg4','pg5','pg6','pg7','pg8',
+  'tg1','tg2','tg3','tg4','tg5','tg6','bg1','bg2','bg3','bg4','bg5','bg6',
+  'fg1','fg2','fg3','fg4','fg5','fg6','den1','den2','den3','den4',
+  'med1','med2','med3','med4','hot1','hot2','hot3','hot4','hot5','hot6',
+  'wed1','wed2','wed3','wed4','wed5','wed6','sal1','sal2','sal3','sal4','sal5','sal6',
+  'jew1','jew2','jew3','jew4','jew5','jew6','con1','con2','con3','con4','con5','con6',
+  'int1','int2','int3','int4','int5','int6','cat1','cat2','cat3','cat4','cat5','cat6',
+  're1','re2','re3','re4','re5','re6'
+];
+
+function slugify(s){
+  return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,50);
+}
+
+function openDeploy(){
+  if(!current){alert('Select a template first.');return;}
+  const nm=v('f-name'); if(!nm){alert('Business Name is required.');return;}
+  const slug=slugify(nm);
+  const inp=document.getElementById('dpl-name');
+  inp.value=slug; inp.classList.remove('err');
+  dplNameChange(inp);
+  document.getElementById('dpl-status').innerHTML='';
+  // Show API settings if not configured
+  const hasUrl=localStorage.getItem('dg_url'), hasKey=localStorage.getItem('dg_key');
+  if(!hasUrl||!hasKey){
+    document.getElementById('dpl-cfg-fields').classList.add('open');
+    document.getElementById('dpl-cfg-toggle').textContent='⚙ API Settings (configure first)';
+  }
+  if(hasUrl) document.getElementById('dpl-api-url').value=hasUrl;
+  if(hasKey) document.getElementById('dpl-api-key').value='••••••••';
+  document.getElementById('dpl-overlay').classList.add('open');
+}
+
+function closeDeploy(){
+  document.getElementById('dpl-overlay').classList.remove('open');
+}
+
+function dplOverlayClick(e){
+  if(e.target===document.getElementById('dpl-overlay')) closeDeploy();
+}
+
+function dplNameChange(inp){
+  const val=inp.value.replace(/[^a-z0-9-]/g,'');
+  inp.value=val;
+  inp.classList.remove('err');
+  document.getElementById('dpl-url-preview').textContent=val||'sitename';
+}
+
+function toggleDplCfg(){
+  const fields=document.getElementById('dpl-cfg-fields');
+  const btn=document.getElementById('dpl-cfg-toggle');
+  const open=fields.classList.toggle('open');
+  btn.textContent=open?'⚙ API Settings (hide)':'⚙ API Settings';
+}
+
+function saveDplCfg(){
+  const url=document.getElementById('dpl-api-url').value.trim().replace(/\/+$/,'');
+  const key=document.getElementById('dpl-api-key').value.trim();
+  if(!url){alert('Enter the deployguy API URL.');return;}
+  if(!key||key==='••••••••'){alert('Enter your API key.');return;}
+  localStorage.setItem('dg_url',url);
+  localStorage.setItem('dg_key',key);
+  document.getElementById('dpl-cfg-fields').classList.remove('open');
+  document.getElementById('dpl-cfg-toggle').textContent='⚙ API Settings';
+  document.getElementById('dpl-api-key').value='••••••••';
+  document.getElementById('dpl-status').innerHTML='<p style="color:#34d399;font-size:12px">Settings saved.</p>';
+}
+
+async function deployNow(){
+  const siteName=document.getElementById('dpl-name').value.trim();
+  if(!siteName||siteName.length<3){
+    document.getElementById('dpl-name').classList.add('err');
+    alert('Site name must be at least 3 characters.');return;
+  }
+
+  const apiUrl=localStorage.getItem('dg_url');
+  const apiKey=localStorage.getItem('dg_key');
+  if(!apiUrl||!apiKey){
+    document.getElementById('dpl-cfg-fields').classList.add('open');
+    document.getElementById('dpl-status').innerHTML='<p style="color:#fca5a5;font-size:12px">Configure API settings first.</p>';
+    return;
+  }
+
+  const btn=document.getElementById('dpl-go');
+  const status=document.getElementById('dpl-status');
+  btn.disabled=true;
+  document.getElementById('dpl-name').classList.remove('err');
+
+  const setStatus=(html)=>{ status.innerHTML=html; };
+
+  try{
+    setStatus('<p style="color:#94a3b8;font-size:12px">Building site...</p>');
+    const d=common();
+    const result=TEMPLATES[current].build(d,false);
+
+    setStatus('<p style="color:#94a3b8;font-size:12px">Compressing images...</p>');
+    const zip=new JSZip();
+    for(const[fn,content] of Object.entries(result)) zip.file(fn,content);
+
+    const addImg=async(key,maxW,maxH)=>{
+      const img=IMG[key]; if(!img?.file) return;
+      try{
+        const blob=await compressImage(img.file,maxW,maxH,0.85);
+        zip.file(compressedName(img.name),blob);
+      }catch{}
+    };
+    await addImg('hero',1920,1080);
+    await addImg('logo',400,400);
+    await addImg('profile',400,400);
+    for(const k of GAL_KEYS) await addImg(k,1200,900);
+
+    setStatus('<p style="color:#94a3b8;font-size:12px">Uploading to server...</p>');
+    const zipBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+
+    const form=new FormData();
+    form.append('site_name',siteName);
+    form.append('file',zipBlob,'upload.zip');
+
+    const res=await fetch(apiUrl+'/deploy',{
+      method:'POST',
+      headers:{'X-API-Key':apiKey},
+      body:form
+    });
+    const data=await res.json();
+
+    if(data.status==='ok'){
+      setStatus(`<div class="dpl-ok">
+        <strong>Deployed!</strong>
+        <a href="${data.url}" target="_blank">${data.url}</a>
+      </div>`);
+    } else if(res.status===409){
+      document.getElementById('dpl-name').classList.add('err');
+      setStatus(`<div class="dpl-err">
+        <p>Name already taken — choose a different site name</p>
+        <small>Change the name above and click Deploy again</small>
+      </div>`);
+    } else {
+      setStatus(`<div class="dpl-err"><p>${data.error||'Deploy failed'}</p></div>`);
+    }
+  }catch(e){
+    setStatus(`<div class="dpl-err"><p>Error: ${e.message}</p></div>`);
+  }finally{
+    btn.disabled=false;
+  }
+}
 </script>
 </body>
 </html>
