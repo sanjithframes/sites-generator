@@ -13,7 +13,13 @@ header small{font-size:11px;color:#475569;background:#1e2235;padding:2px 8px;bor
 main{display:flex;flex:1;overflow:hidden}
 #sidebar{width:390px;flex-shrink:0;background:#13151f;border-right:1px solid #1e2235;display:flex;flex-direction:column;overflow:hidden}
 #tpl-bar{padding:14px 14px 0;flex-shrink:0}
-#tpl-bar h2{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#475569;margin-bottom:8px}
+#tpl-bar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+#tpl-bar h2{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#475569;margin:0}
+#tpl-toggle{background:none;border:1px solid #2d3148;color:#475569;font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;transition:all .15s}
+#tpl-toggle:hover{border-color:#7c3aed;color:#a78bfa}
+#tpl-current{display:none;background:#1e1630;border:1.5px solid #7c3aed;border-radius:8px;padding:8px 11px;margin-bottom:8px;cursor:pointer}
+#tpl-current-name{font-size:12px;font-weight:600;color:#e2e8f0}
+#tpl-current-ind{font-size:10px;color:#7c3aed;margin-top:1px}
 #tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .tpl-card{background:#1a1d27;border:1.5px solid #2d3148;border-radius:8px;padding:9px 11px;cursor:pointer;transition:all .15s}
 .tpl-card:hover{border-color:#7c3aed}
@@ -66,7 +72,14 @@ main{display:flex;flex:1;overflow:hidden}
 <main>
 <div id="sidebar">
   <div id="tpl-bar">
-    <h2>Template</h2>
+    <div id="tpl-bar-header">
+      <h2>Template</h2>
+      <button id="tpl-toggle" onclick="toggleTplGrid()">▲ Hide</button>
+    </div>
+    <div id="tpl-current" onclick="toggleTplGrid()">
+      <div id="tpl-current-name">—</div>
+      <div id="tpl-current-ind">click to change</div>
+    </div>
     <div id="tpl-grid"></div>
   </div>
   <div id="form-area">
@@ -637,11 +650,28 @@ function addProd(){addItem('prod-list',`
 // ─── Template selector ────────────────────────────────────────────────────────
 let current = null;
 
+function toggleTplGrid() {
+  const grid = document.getElementById('tpl-grid');
+  const cur  = document.getElementById('tpl-current');
+  const btn  = document.getElementById('tpl-toggle');
+  const hidden = grid.style.display === 'none';
+  grid.style.display   = hidden ? 'grid' : 'none';
+  cur.style.display    = hidden ? 'none' : (current ? 'block' : 'none');
+  btn.textContent      = hidden ? '▲ Hide' : '▼ Show';
+}
+
 function selectTpl(id) {
   current = id;
   document.querySelectorAll('.tpl-card').forEach(c=>c.classList.toggle('active',c.dataset.id===id));
   TEMPLATES[id].onSelect();
   livePreview();
+  // auto-collapse grid and show selected template chip
+  const t = TEMPLATES[id];
+  document.getElementById('tpl-current-name').textContent = t.label;
+  document.getElementById('tpl-current-ind').textContent  = t.industry + ' · click to change';
+  document.getElementById('tpl-grid').style.display    = 'none';
+  document.getElementById('tpl-current').style.display = 'block';
+  document.getElementById('tpl-toggle').textContent    = '▼ Show';
 }
 
 function buildGrid() {
