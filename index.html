@@ -719,6 +719,33 @@ function livePreview() {
 }
 
 // ─── Generate ─────────────────────────────────────────────────────────────────
+// ─── Image compression ────────────────────────────────────────────────────────
+function compressImage(file, maxW, maxH, quality=0.85) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      let {width:w, height:h} = img;
+      if(w > maxW || h > maxH) {
+        const ratio = Math.min(maxW/w, maxH/h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality);
+    };
+    img.src = url;
+  });
+}
+
+function compressedName(original) {
+  return original.replace(/\.[^.]+$/, '') + '.jpg';
+}
+
+// ─── Generate ─────────────────────────────────────────────────────────────────
 async function generate() {
   if(!current){alert('Select a template first.');return;}
   const nm=v('f-name'); if(!nm){alert('Business Name is required.');return;}
@@ -729,18 +756,45 @@ async function generate() {
   let root;
   try{root=await window.showDirectoryPicker({mode:'readwrite'});}catch{return;}
   const dir = await root.getDirectoryHandle(folder,{create:true});
+
+  // write HTML/CSS files
   for(const[fn,content] of Object.entries(result)){
     const fh=await dir.getFileHandle(fn,{create:true});
     const w=await fh.createWritable(); await w.write(content); await w.close();
   }
-  const imgKeys=['logo','hero','profile','rg1','rg2','rg3','rg4','rg5','rg6',
+
+  // compress and write images
+  const heroKeys  = ['hero'];
+  const logoKeys  = ['logo','profile'];
+  const galKeys   = ['rg1','rg2','rg3','rg4','rg5','rg6',
     'wg1','wg2','wg3','wg4','wg5','wg6','pg1','pg2','pg3','pg4','pg5','pg6','pg7','pg8',
-    'tg1','tg2','tg3','tg4','tg5','tg6','bg1','bg2','bg3','bg4','bg5','bg6','fg1','fg2','fg3','fg4','fg5','fg6'];
-  for(const k of imgKeys){
-    const img=IMG[k]; if(!img) continue;
-    try{const fh=await dir.getFileHandle(img.name,{create:true});const w=await fh.createWritable();await w.write(await img.file.arrayBuffer());await w.close();}catch{}
-  }
-  alert(`Generated: ${folder}/`);
+    'tg1','tg2','tg3','tg4','tg5','tg6','bg1','bg2','bg3','bg4','bg5','bg6',
+    'fg1','fg2','fg3','fg4','fg5','fg6','den1','den2','den3','den4',
+    'med1','med2','med3','med4','hot1','hot2','hot3','hot4','hot5','hot6',
+    'wed1','wed2','wed3','wed4','wed5','wed6','sal1','sal2','sal3','sal4','sal5','sal6',
+    'jew1','jew2','jew3','jew4','jew5','jew6','con1','con2','con3','con4','con5','con6',
+    'int1','int2','int3','int4','int5','int6','cat1','cat2','cat3','cat4','cat5','cat6',
+    're1','re2','re3','re4','re5','re6'];
+
+  const compress = async (key, maxW, maxH) => {
+    const img = IMG[key]; if(!img) return;
+    try {
+      const blob = await compressImage(img.file, maxW, maxH, 0.85);
+      const name = compressedName(img.name);
+      const fh = await dir.getFileHandle(name, {create:true});
+      const w = await fh.createWritable(); await w.write(blob); await w.close();
+    } catch{}
+  };
+
+  const btn = document.getElementById('gen-btn');
+  btn.textContent = 'Compressing images…'; btn.disabled = true;
+
+  for(const k of heroKeys)  await compress(k, 1920, 1080);
+  for(const k of logoKeys)  await compress(k, 400,  400);
+  for(const k of galKeys)   await compress(k, 1200, 900);
+
+  btn.textContent = 'Generate Website'; btn.disabled = false;
+  alert(`✅ Generated: ${folder}/\nImages compressed for fast loading.`);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
